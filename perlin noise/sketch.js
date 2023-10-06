@@ -9,29 +9,34 @@
 let rectLen = 2;
 let noiseShift = 0.009;
 let noiseNumber = 0;
-let curX,curY;
+let rectX,rectY,x,y;
+let terrainList=[];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   rectMode(CORNERS);
-  curY = height;
+  y = height;
+  x = 0;
 }
 
 function draw() {
   background(255);
   noiseNumber = 0;
   generateTerrain();
+  drawFlag(x,y);
 }
 
 function generateTerrain(){
-  for(let rectX = 0; rectX <width;rectX+=rectLen){
+  for(rectX = 0; rectX<width;rectX+=rectLen){
     fill(255);
     let ranSize = noise(noiseNumber);
     ranSize = map(ranSize,0,1,height*0.1,height*0.8);
     noiseNumber += noiseShift;
-    let rectY = height-ranSize;
+    rectY = height-ranSize;
     rect(rectX,height,rectX+rectLen,rectY);
-    drawFlag(rectX,rectY);
+    if(y>=rectY){
+      x=rectX,y=rectY;
+    }
   }
 }
 
@@ -41,6 +46,7 @@ function keyPressed(){
   }
   else if(key === "ArrowLeft"){
     rectLen-=0.1;
+    generateTerrain();
   }
   else{
     print(key);
@@ -48,11 +54,10 @@ function keyPressed(){
 }
 
 function drawFlag(x,y){
-  if(y<curY){
-    curX=x,curY=y;
-  }
-  rect(curX-rectLen*0.2,curY,curX-rectLen*0.6,curY-40);
+  let flgLen = rectLen*0.5;
+  rect(x-flgLen,y,x-flgLen,y-40);
   fill(255,0,0);
-  triangle(curX,curY-40,curX,curY-25,curX+20,curY-32.5);
+  triangle(x-flgLen,y-40,x-flgLen,
+    y-25,x+20-flgLen,y-32.5);
 }
 
