@@ -1,23 +1,30 @@
-// Project Title
-// Your Name
-// Date
+// terrain generation
+// timothy dobson
+// 10/12/2023
 //
-// Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// this program uses perlin noise to generate a terrain that
+// continously scrols to the right creating a flag on the highest 
+//peak and a line that shows the average of size on the terrain
+// it also allow the user to change the size of the rectangle that
+//that make the terrain with the arrow keys
+
 
 // global variables
 let rectLen = 1;
-let noiseShift = 0.009;
+let noiseShift = 0.01;
 let noiseNumber;
 let rectX,rectY,x,y;
 let terrainList=[];
 let cont = 0;
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   rectMode(CORNERS);
 }
 
+//makesure the variables are always the same and changes so that
+//terrain moves also runs all the functions that make the terrain
 function draw() {
   noiseNumber = cont;
   y=height;
@@ -27,9 +34,10 @@ function draw() {
   generateTerrain();
   drawFlag(x,y);
   middleLine();
-  cont+=0.07;
+  cont+=0.06;
 }
 
+//creates the terrain by drawing rectangle very closly together
 function generateTerrain(){
   for(rectX = 0; rectX<width;rectX+=rectLen){
     fill(255);
@@ -38,12 +46,18 @@ function generateTerrain(){
     noiseNumber += noiseShift;
     rectY = height-ranSize;
     rect(rectX,height,rectX+rectLen,rectY);
+    //gets the heighest peak
     if(y>=rectY){
       x=rectX,y=rectY;
     }
+    //puts the terrains height in a array so that we can figure out 
+    // the middle
     terrainList.push(rectY);
   }
 }
+
+//uses the array with all the rectangles heights to make a line on 
+//middle of the heights
 function middleLine(){
   let finalCount = 0;
   for(let i = 0; i < terrainList.length;i++){
@@ -53,6 +67,7 @@ function middleLine(){
   line(0,finalCount,width,finalCount);
   stroke(0);
 }
+//lets the user change the size of the rectangle with the arrow keys
 function keyPressed(){
   if(key === "ArrowRight"){
     rectLen+=0.1;
@@ -65,6 +80,7 @@ function keyPressed(){
   }
 }
 
+//draws a flag on the heighest peak in the terrain
 function drawFlag(x,y){
   let flgLen = rectLen*0.5;
   rect(x-flgLen,y,x-flgLen,y-40);
