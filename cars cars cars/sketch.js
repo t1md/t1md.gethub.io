@@ -8,7 +8,7 @@ let recty, rectheight;
 let eastBound = [];
 let westBound = [];
 let count = 20;
-let mytraffic;
+let myTraffic;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -18,19 +18,20 @@ function setup() {
   for(let i = 0; i<count;i++){
     westBound.push(new Vehicle(0));
   }
-  mytraffic = new TrafficLight(100,100,0);
+  myTraffic = new TrafficLight(100,100,1);
 }
 
 function draw() {
   background(220);
   drawRoad();
+
   for(let e of eastBound){
     e.action();
   }
   for(let w of westBound){
     w.action();
   }
-  mytraffic.drawLight();
+  myTraffic.drawLight();
 }
 
 function drawRoad(){
@@ -42,6 +43,11 @@ function drawRoad(){
     rect(i+10,height/2,11,1.5);
   }
 
+}
+function keyPressed(){ 
+  if(keyCode === 32){
+    myTraffic.stop();
+  }
 }
 
 function mouseClicked(){
@@ -166,6 +172,11 @@ class TrafficLight{
       fill(color("green"));
     }
     circle(this.x,this.y+18,30);
+  }
+
+  stop(){
+    this.light = 0;
+    
   }
 
 }
