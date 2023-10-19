@@ -7,17 +7,30 @@
 let recty, rectheight;
 let eastBound = [];
 let westBound = [];
-let mycar;
+let count = 20;
+let mytraffic;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  mycar = new Vehicle(0,0);
+  for(let i = 0; i<count;i++){
+    eastBound.push(new Vehicle(1));
+  }
+  for(let i = 0; i<count;i++){
+    westBound.push(new Vehicle(0));
+  }
+  mytraffic = new TrafficLight(100,100,0);
 }
 
 function draw() {
   background(220);
   drawRoad();
-  mycar.action();
+  for(let e of eastBound){
+    e.action();
+  }
+  for(let w of westBound){
+    w.action();
+  }
+  mytraffic.drawLight();
 }
 
 function drawRoad(){
@@ -30,10 +43,20 @@ function drawRoad(){
   }
 
 }
+
+function mouseClicked(){
+  if(keyIsPressed && keyCode===SHIFT){
+    westBound.push(new Vehicle(0));
+  }
+  else{
+    eastBound.push(new Vehicle(1));
+  }
+}
+
 class Vehicle{
 
-  constructor(x,direction){
-    this.x = x;
+  constructor(direction){
+    this.x = random(0,width);
     if (direction === 1 ){
       this.y = random(height/2+15,height/2+height*0.2-15);
     }
@@ -100,10 +123,6 @@ class Vehicle{
   }
 
 }
-
-
-
-
 function drawCar(x,y,color){
   fill(255);
   rect(x+12,y-8,6,4);
@@ -124,4 +143,29 @@ function drawVan(x,y,color,direction){
     rect(x,y,11,11);
     rect(x+10,y,12,11);
   }
+}
+
+class TrafficLight{
+
+  constructor(x,y,light){
+    this.x = x;
+    this.y = y;
+    this.light = light;
+  }
+
+  drawLight(){
+    fill(color("yellow"));
+    rect(this.x,this.y,20,40);
+    fill(255);
+    if(this.light === 0){
+      fill(color("red"));
+    }
+    circle(this.x,this.y-18,30);
+    fill(255);
+    if(this.light === 1){
+      fill(color("green"));
+    }
+    circle(this.x,this.y+18,30);
+  }
+
 }
