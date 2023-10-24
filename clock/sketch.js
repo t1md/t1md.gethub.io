@@ -5,10 +5,10 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-const now = new Date();
-let hours = now.getHours();
-let minutes = now.getMinutes();
-let seconds =now.getSeconds();
+let TIME;
+let hours;
+let minutes;
+let seconds;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -38,16 +38,23 @@ function drawClock(size){
     line(0,0+size-15,0,0+size-5);
     pop();
   }
+  TIME = new Date();
+  hours = TIME.getHours();
+  minutes = TIME.getMinutes();
+  seconds =TIME.getSeconds();
   push();
-  rotate(radians(0));
+  let hour = map(hours,0,24,0,360*2);
+  rotate(radians(hour));
   line(0,0,0,-size/2);
   pop();
   push();
-  rotate(radians(45));
+  let min = map(minutes,0,60,0,360);
+  rotate(radians(min));
   line(0,0,0,-size+60);
   pop();
   push();
-  rotate(radians(90));
+  let sec = map(seconds,0,60,0,360);
+  rotate(radians(sec));
   stroke(color("red"));
   line(0,0,0,-size+30);
   pop();
