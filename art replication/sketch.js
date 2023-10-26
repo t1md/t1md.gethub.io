@@ -26,7 +26,7 @@ function Sinusoids(lineY){
   curveVertex(0, lineY);
   for(let x =0; x<width;x++){
     for (let y = 0;y<x;y++){
-      h = x;
+      h = width-x;
       sineY = h - h * Math.sin( x * 2 * Math.PI * (1/width) );
       curveVertex(x, lineY+sineY);
     }
