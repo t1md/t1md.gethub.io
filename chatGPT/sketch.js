@@ -1,9 +1,31 @@
-canvas id="myCanvas" width="550" height="360" style="border:1px solid #d3d3d3;"></canvas
-var c = document.getElementById("myCanvas");
-var ctx = c.getContext("2d");
-ctx.moveTo(50,50);
-ctx.bezierCurveTo(120,-100,200,250,250,50);
-ctx.bezierCurveTo(300,-100,350,250,430,50);
-ctx.lineWidth = 5;
-ctx.strokeStyle = '#003300';
-ctx.stroke();
+let numSinusoids = 90;
+let amplitude = 50;
+let timeScale = 0.02;
+
+function setup() {
+  createCanvas(800, 400);
+  noLoop();
+}
+
+function draw() {
+  background(255);
+
+  for (let i = 0; i < numSinusoids; i++) {
+    let phase = (i / numSinusoids) * TWO_PI;
+    let frequencyScale = 0.02 + (i / numSinusoids) * 0.02; // Linearly increasing frequency
+    drawSinusoid(phase, frequencyScale);
+  }
+}
+
+function drawSinusoid(phase, frequencyScale) {
+  beginShape();
+  noFill();
+  stroke(0);
+
+  for (let x = 0; x < width; x++) {
+    let y = amplitude * sin(x * frequencyScale + phase + millis() * timeScale);
+    vertex(x, height / 2 + y);
+  }
+
+  endShape();
+}
