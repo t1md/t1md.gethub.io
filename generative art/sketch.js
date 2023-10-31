@@ -17,9 +17,10 @@ function draw() {
   background(0);
   fill(255);
   star();
-  for(let i = 0; i<10;i++){
+  for(let i = 0; i<2.5*zoom;i++){
     art();
   }
+  // save("processnum4.png");
 }
 
 
@@ -38,22 +39,26 @@ function art(){
   x = random(0,width);
   y = random(0,height);
   let len = random(50,100);
-  for(let fire = 0; fire<360;fire+=randomGaussian(20,10)){
-    push();
-    translate(x,y);
-    rotate(radians(fire));
-    beginShape();
-    curveVertex(0,0);
-    curveVertex(0,0);
-    curveVertex(0,0);
-    curveVertex(fire-180,len/2);
-    curveVertex(0,len);
-    curveVertex(0,len);
-    endShape();
-    pop();
+  for(let i = 0; i <2; i ++){
+    stroke(random(255),255,255);
+    for(let fire = 0; fire<360;fire+=randomGaussian(20,10)){
+      push();
+      translate(x,y);
+      rotate(radians(fire));
+      beginShape();
+      curveVertex(0,0);
+      curveVertex(0,0);
+      curveVertex(0,0);
+      curveVertex(200,len*2);
+      curveVertex(0,len);
+      curveVertex(-50,len);
+      curveVertex(-50,len);
+      endShape();
+      pop();
+    }
   }
 
 }
 // as fire gets closer to 180 the line gets straighter
 
-// save("processnum.png");
+// save("processnum3.png");
