@@ -5,7 +5,7 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-let grid = [[0,0,255,0,255],[255,0,255,0,0],[255,255,0,255,0],[255,255,0,0,255]];
+let grid = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]];
 
 let win = false;
 let numRows = 4;
@@ -17,13 +17,26 @@ function setup() {
   rectWidth = 50;
   rectHeight = 50;
   createCanvas(numCols*rectWidth, numRows*rectHeight);
+  for(let y = 0; y<numRows;y++){
+    for(let x = 0;x<numCols;x++){
+      let num = Math.floor(random(1));
+      if (num === 0){
+        grid[y][x];
+      }
+    }
+  }
+  textSize(50);
+  textAlign(CENTER);
 }
 
 function draw() {
   row = getCurrentY(), col = getCurrentX();
-  background(220);
   drawGrid();
-  print(win);
+  youWon();
+  stroke(0);
+  noFill();
+  rect(0,0,width,height);
+  noStroke();
 }
 
 function getCurrentX(){
@@ -45,7 +58,6 @@ function drawGrid(){
       rect(x*rectWidth,y*rectHeight,rectWidth,rectHeight);
     }
   }
-  // winner();
 }
 
 function mouseClicked(){
@@ -67,6 +79,7 @@ function mouseClicked(){
       flip(col,row-1);
     }
   }
+  winner(col,row);
 }
 
 function flip(col,row){
@@ -75,5 +88,46 @@ function flip(col,row){
   }
   else{
     grid[row][col] = 0;
+  }
+}
+function winner(col,row){
+  let fin = true;
+  if(grid[row][col]===0){
+    for (let i = 0; i < grid.length; i++) {
+      for(let j = 0; j < grid[i].length; j++) {
+        if(grid[i][j] === 255){
+          fin = false;
+
+        }
+      }
+    }
+  }
+  if(grid[row][col]===255){
+    for (let i = 0; i < grid.length; i++) {
+      for(let j = 0; j < grid[i].length; j++) {
+        if(grid[i][j] === 0){
+          fin = false;
+        }
+      }
+    }
+  }
+  if(fin === true){
+    win = true;
+  }
+  else{
+    win = false;
+  }
+}
+
+function youWon(){
+  if (grid[row][col]===0){
+    fill(255);
+  }
+  if (grid[row][col]===255){
+    fill(0);
+  }
+  if (win === true){
+    
+    text("you Win!!",width/2,height/2);
   }
 }
