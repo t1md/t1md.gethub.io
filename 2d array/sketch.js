@@ -5,8 +5,8 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
+//global variables
 let grid = [];
-
 let win = false;
 let mult = 1;
 let numRows = 4*mult;
@@ -14,7 +14,11 @@ let numCols = 5*mult;
 let found;
 let rectWidth,rectHeight,row,col;
 let space = false;
+let overlay;
 
+
+
+//fills grid with 0 or 255 values creates the canvas
 function setup() {
   for(let i = 0; i<numRows;i++){
     grid.push([]);
@@ -31,12 +35,15 @@ function setup() {
       else{
         grid[y][x] = 255;
       }
+      
     }
   }
   textSize(50);
   textAlign(CENTER);
+
 }
 
+//runs most of the 
 function draw() {
   row = getCurrentY(), col = getCurrentX();
   drawGrid();
@@ -45,6 +52,7 @@ function draw() {
   noFill();
   rect(0,0,width,height);
   noStroke();
+  overgrid(col,row);
 }
 
 function getCurrentX(){
@@ -71,12 +79,14 @@ function drawGrid(){
 function mouseClicked(){
   if(keyIsPressed && keyCode===SHIFT){
     flip(col,row);
+    
   }
   else if(space === true){
     sqr( );
   }
   else{
     cross();
+    
   }
   winner(col,row);
 }
@@ -167,6 +177,43 @@ function keyPressed(){
     }
     else{
       space = true;
+    }
+  }
+}
+
+function overgrid(col,row){
+  fill(0,255,0,120);
+
+  if (keyIsPressed && keyCode === SHIFT){
+    rect(rectWidth*col,rectHeight*row,rectWidth,rectHeight);
+  } 
+  else {
+    if(space === false){
+      rect(rectWidth*col,rectHeight*row,rectWidth,rectHeight);
+      if(col<numCols-1){
+        rect(rectWidth*(col+1),rectHeight*row,rectWidth,rectHeight);
+      }
+      if(col>0){
+        rect(rectWidth*(col-1),rectHeight*row,rectWidth,rectHeight);
+      }
+      if(row<numRows-1){
+        rect(rectWidth*col,rectHeight*(row+1),rectWidth,rectHeight);
+      }
+      if(row>0){
+        rect(rectWidth*col,rectHeight*(row-1),rectWidth,rectHeight);
+      }
+    }
+    if(space === true){
+      rect(rectWidth*col,rectHeight*row,rectWidth,rectHeight);
+      if(col<numCols-1){
+        rect(rectWidth*(col+1),rectHeight*row,rectWidth,rectHeight);
+      }
+      if(row<numRows-1){
+        rect(rectWidth*col,rectHeight*(row+1),rectWidth,rectHeight);
+      }
+      if(row<numRows-1&&col<numCols-1){
+        rect(rectWidth*(col+1),rectHeight*(row+1),rectWidth,rectHeight);
+      }
     }
   }
 }
