@@ -1,9 +1,10 @@
-// Project Title
-// Your Name
-// Date
-//
-// Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// puzzle game
+// tim dobson 
+// 11/16/2023
+//this is a puzzle game which lets you flip the color of the blocks in a
+// cross shape or in a 2x2 square with the goal of getting all the squares
+// to be one color you can also shift click to change just one square and
+// it highlights which shapes you will change with a green 
 
 //global variables
 let grid = [];
@@ -18,7 +19,8 @@ let overlay;
 
 
 
-//fills grid with 0 or 255 values creates the canvas
+//creates the locations for the grid then fills the grid with 0 or 255 
+// values and creates the canvas
 function setup() {
   for(let i = 0; i<numRows;i++){
     grid.push([]);
@@ -43,28 +45,31 @@ function setup() {
 
 }
 
-//runs most of the 
+//runs most of the functions which draw the grid and figures out if your
+// winning and which blocks will be placed next 
 function draw() {
   row = getCurrentY(), col = getCurrentX();
   drawGrid();
   youWon();
+  overgrid(col,row);
+  // draws an outline
   stroke(0);
   noFill();
   rect(0,0,width,height);
   noStroke();
-  overgrid(col,row);
-}
 
+}
+// gets the mouses current x position on the grid and which square that is
 function getCurrentX(){
   let constrainMouseX = constrain(mouseX, 0, width-1);
   return floor(constrainMouseX/rectWidth); 
 }
-
+// gets the mouses current y position on the grid and which square that is
 function getCurrentY(){
   let constrainMouseY = constrain(mouseY, 0, height-1);
   return floor(constrainMouseY/rectHeight);
 }
-
+//draws the grid and fills according to what the squares should be
 function drawGrid(){
   for(let x = 0;x<numCols;x++){
     for(let y = 0; y<numRows;y++){
@@ -75,7 +80,8 @@ function drawGrid(){
     }
   }
 }
-
+// flips the squares colors according to if you pressed the space key or 
+// if your holding the shift key and checks if the user won
 function mouseClicked(){
   if(keyIsPressed && keyCode===SHIFT){
     flip(col,row);
@@ -91,6 +97,7 @@ function mouseClicked(){
   winner(col,row);
 }
 
+// flips the current square and all its immediate neighbours up,down,left,right
 function cross(){
   flip(col,row);
   if(col<numCols-1){
@@ -106,7 +113,8 @@ function cross(){
     flip(col,row-1);
   }
 }
-
+// flips the squares in a two by two with the current square being the top
+// left corner
 function sqr(){
   flip(col,row);
   if(col<numCols-1){
@@ -120,6 +128,7 @@ function sqr(){
   }
 }
 
+// flips the colors of the square to the opposite color
 function flip(col,row){
   if(grid[row][col]===0){
     grid[row][col] = 255;
@@ -128,6 +137,7 @@ function flip(col,row){
     grid[row][col] = 0;
   }
 }
+// checks if all the squares are the same color
 function winner(col,row){
   let fin = true;
   if(grid[row][col]===0){
@@ -156,7 +166,8 @@ function winner(col,row){
     win = false;
   }
 }
-
+// writes a victory message on the middle of the screen in the opposite
+// color
 function youWon(){
   if (grid[row][col]===0){
     fill(255);
@@ -170,6 +181,7 @@ function youWon(){
   }
 }
 
+//if the space key is pressed it changes the value of the space variable
 function keyPressed(){
   if(key === " "){
     if(space === true){
@@ -180,7 +192,8 @@ function keyPressed(){
     }
   }
 }
-
+// draws a green overlay onto the locations where if you pressed your mouse
+// it would change the values of the squares 
 function overgrid(col,row){
   fill(0,255,0,120);
 
