@@ -4,17 +4,21 @@
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
+
+
+
+
 let grid =[];
-let numRows = 5;
-let numCols = 5;
+let numRows = 20;
+let numCols = 20;
 let rectWidth, rectHeight;
 
 function setup() {
   for(let i = 0; i<numRows;i++){
     grid.push([]);
   }
-  rectWidth = 50;
-  rectHeight = 50;
+  rectWidth = 40;
+  rectHeight = 40;
   createCanvas(numCols*rectWidth, numRows*rectHeight);
 }
 
