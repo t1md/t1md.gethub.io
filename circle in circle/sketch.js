@@ -5,8 +5,8 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-let circleCount = 2;
-let depth = 3;
+let circleCount = 3;
+let depth = 10;
 let circleSize =250;
 let len;
 
@@ -18,16 +18,18 @@ function setup() {
 function draw() {
 
   background(220);
-  drawCircle(0,circleSize,depth);
+  drawCircle(0,circleSize,depth,1);
 }
 
-function drawCircle(len,circleSize,depth){
+function drawCircle(len,circleSize,depth,rotation){
   if(depth>0){
     push();
     translate(width/2,height/2);
+    rotate(radians(360/circleCount/rotation));
     circle(len,0,circleSize);
-    len = circleSize/4;
     pop();
-    drawCircle(len,circleSize/2,depth-1);
+    for(let  i =0; i<circleCount;i++){
+      drawCircle(len+circleSize/4,circleSize/2,depth-1,i);
+    }
   }
 }
