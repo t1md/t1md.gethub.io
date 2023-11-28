@@ -1,28 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        canvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+    <title>Fractal Circles</title>
+</head>
+<body>
+    <canvas id="fractalCanvas" width="800" height="800"></canvas>
+    <script>
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
 
-    <title>Sketch</title>
+        let depth = 3;
+        let numCircles = 2;
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+        function drawFractal(center, radius, depth, numCircles) {
+            if (depth === 0) {
+                return;
+            }
 
-    <!-- Linking to the main p5.js library, which allows your code to use all 
-       p5 functions. Using this version while developing your code allows p5 
-       to provide more Friendly Error Messages if you mess something up...-->
-    <script src="libraries/p5.js"></script>
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+            ctx.stroke();
 
-    <!-- Once your project is working completely, you can comment out the link
-       to p5.js above, and instead link to this minified version. The minified
-       version takes less space, and turns off Friendly Error Messages. This 
-       increases the speed of your program quite dramatically in some cases.-->
-    <!-- <script src="libraries/p5.min.js"></script> -->
+            let angle = 0;
+            for (let i = 0; i < numCircles; i++) {
+                const newCenter = {
+                    x: center.x + (radius - radius / 4) * Math.cos(angle),
+                    y: center.y + (radius - radius / 4) * Math.sin(angle)
+                };
+                drawFractal(newCenter, radius / 2, depth - 1, numCircles);
+                angle += (2 * Math.PI) / numCircles;
+            }
+        }
 
-    <script src="libraries/p5.sound.min.js"></script>
-  </head>
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
 
-  <body>
-    <script src="sketch.js"></script>
-  </body>
+        function updateFractal() {
+            clearCanvas();
+            const center = { x: canvas.width / 2, y: canvas.height / 2 };
+            const initialRadius = Math.min(canvas.width, canvas.height) / 3;
+            drawFractal(center, initialRadius, depth, numCircles);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp') {
+                depth++;
+            } else if (event.key === 'ArrowDown' && depth > 1) {
+                depth--;
+            } else if (event.key === 'ArrowRight') {
+                numCircles++;
+            } else if (event.key === 'ArrowLeft' && numCircles > 2) {
+                numCircles--;
+            }
+
+            updateFractal();
+        });
+
+        // Initial draw
+        updateFractal();
+    </script>
+</body>
 </html>
