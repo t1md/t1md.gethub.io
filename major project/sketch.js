@@ -22,8 +22,8 @@ function setup() {
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
-  for(let i = 0;i<10;i++){
-    enemies.push(new Enemy(0,10,5));
+  for(let i = 0;i<1;i++){
+    enemies.push(new Enemy(0,floor(random(0,14))));
   }
 }
 
@@ -77,6 +77,7 @@ class Tower{
     this.fireRate = 1;
     this.counter = 0;
     this.bullets = [];
+    this.bulletSpeed = 5;
   }
 
   getColPosition(){
@@ -91,7 +92,7 @@ class Tower{
   }
 
   createBullet(){
-    this.bullets.push(new Bullet(this.x,this.y,-5,5));
+    this.bullets.push(new Bullet(this.x,this.y,5,5));
   }
 
   bulletTravel(){
@@ -103,8 +104,16 @@ class Tower{
     }
   }
 
+  findEnemies(){
+    for(let b of enemies){
+      this.badX = b.enemyX;
+      this.badY =b.enemyY;
+    }
+  }
+
   action(){
     this.createBase();
+    this.findEnemies();
     this.counter+=1;
     if(this.counter%(this.fireRate*60)===0){ 
       this.createBullet();
@@ -115,9 +124,10 @@ class Tower{
 }
 
 class Bullet{
-  constructor(x,y,speed){
+  constructor(x,y,speed,angle){
     this.position = createVector(x,y);
     this.bulletSpeed = createVector(speed,0);
+    this.angle = angle;
   }
 
   createBase(){
@@ -146,8 +156,18 @@ class Enemy{
     this.travelSpeed = createVector(5,0);
   }
 
+  enemyX(){
+    return this.position.x;
+  }
+  enemyY(){ 
+    return this.position.y;
+  }
+
   movement(){
     this.position.add(this.travelSpeed);
+    if(this.position.x > width){
+      this.position.x = 0;
+    }
   }
 
   createEnemy(){
