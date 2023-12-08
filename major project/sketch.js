@@ -16,6 +16,8 @@ let row,col;
 let defence = [];
 let grid = [];
 let enemies = [];
+let checkpoints = [];
+
 
 function setup() {
   createCanvas(numCols*rectWidth+200, numRows*rectHeight);
@@ -23,14 +25,15 @@ function setup() {
     grid.push(Array(numCols).fill(0));
   }
   for(let i = 0;i<1;i++){
-    enemies.push(new Enemy(0,floor(random(0,14))));
+    enemies.push(new Enemy(0,7));
   }
+  drawPath(0,7);
 }
 
 function draw() {
   row = getCurrentY();
   col = getCurrentX();
-  background(0,255,0);
+  background(150);
   base();
   for(let d of defence){
     d.action();
@@ -43,6 +46,15 @@ function draw() {
 function base(){
   for(let y = 0;y<numRows;y++){
     for(let x = 0;x<numCols;x++){
+      if(grid[x][y] === 0){
+        fill(0,255,0);
+      }
+      if(grid[x][y] === 1){
+        fill(100);
+      }
+      if(grid[x][y] === 2){
+        fill("brown");
+      }
       rect(x*rectWidth,y*rectHeight,rectWidth,rectHeight);
     }
   }
@@ -61,14 +73,47 @@ function getCurrentY(){
 function mousePressed(){
   if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
     if(grid[col][row] === 0){
-      defence.push(new Tower(col,row));
+      defence.push(new Tower(col,row,255));
       grid[col][row] = 1;
     }
   }
 }
 
+function drawPath(x,y){
+  let direction = floor(random(4));
+  while(direction >4 || direction<0 ){
+    direction = floor(random(4));
+  }
+  if(x < 15){
+    grid[x][y] = 2;
+    print(x,y,direction,);
+    if(direction === 0 || direction === 1 ){
+      drawPath(x+1,y);
+    }
+    else if(direction === 2 && y!==14){
+      if(grid[x][y+1]===2){
+        drawPath(x+1,y);
+      }
+      else{
+        drawPath(x,y+1);
+      }
+    }
+    else if(direction === 3 && y!==0){
+      if(grid[x][y-1]===2){
+        drawPath(x+1,y);
+      }
+      else{
+        drawPath(x,y-1);
+      }
+    }
+    else{
+      drawPath(x+1,y);
+    }
+  }
+}
+
 class Tower{
-  constructor(x,y){
+  constructor(x,y,c){
     this.col = x;
     this.row = y;
     this.x = x*rectWidth+rectWidth/2;
@@ -78,6 +123,7 @@ class Tower{
     this.counter = 0;
     this.bullets = [];
     this.bulletSpeed = 5;
+    this.c =  c;
   }
 
   getColPosition(){
@@ -88,11 +134,12 @@ class Tower{
   }
 
   createBase(){
+    fill(this.c);
     circle(this.x,this.y,this.size);
   }
 
   createBullet(){
-    this.bullets.push(new Bullet(this.x,this.y,5,5));
+    this.bullets.push(new Bullet(this.x,this.y,5,255));
   }
 
   bulletTravel(){
@@ -107,7 +154,7 @@ class Tower{
   findEnemies(){
     for(let b of enemies){
       this.badX = b.enemyX;
-      this.badY =b.enemyY;
+      this.badY = b.enemyY;
     }
   }
 
@@ -124,14 +171,15 @@ class Tower{
 }
 
 class Bullet{
-  constructor(x,y,speed,angle){
+  constructor(x,y,speed,c){
     this.position = createVector(x,y);
     this.bulletSpeed = createVector(speed,0);
-    this.angle = angle;
+    this.c = c;
   }
 
   createBase(){
-    circle(this.position.x,this.position.y,10);
+    fill(this.c);
+    circle(this.position.x,this.position.y,15);
   }
 
   movement(){
@@ -172,7 +220,7 @@ class Enemy{
 
   createEnemy(){
     fill("red");
-    circle(this.position.x,this.position.y,25);
+    circle(this.position.x,this.position.y,30);
     fill(255);
   }
 
