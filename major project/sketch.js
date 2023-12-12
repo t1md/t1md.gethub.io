@@ -16,7 +16,8 @@ let row,col;
 let defence = [];
 let grid = [];
 let enemies = [];
-let checkpoints = [];
+let checkPointX = [];
+let checkPointY = [];
 
 
 function setup() {
@@ -40,6 +41,9 @@ function draw() {
   }
   for(let b of enemies){
     b.action();
+  }
+  if(frameCount%60===0){
+    enemies.push(new Enemy(0,7));
   }
 }
 
@@ -86,7 +90,8 @@ function drawPath(x,y){
   }
   if(x < 15){
     grid[x][y] = 2;
-    print(x,y,direction,);
+    checkPointX.push(x*rectWidth+rectWidth/2);
+    checkPointY.push(y*rectHeight+rectHeight/2);
     if(direction === 0 || direction === 1 ){
       drawPath(x+1,y);
     }
@@ -201,7 +206,35 @@ class Bullet{
 class Enemy{
   constructor(x,y){
     this.position = createVector(x,y*rectHeight+rectHeight/2);
-    this.travelSpeed = createVector(5,0);
+    this.travelSpeed = createVector(0,0);
+    this.counter = 0;
+  }
+
+  findPath(){
+    this.goalX = checkPointX[this.counter];
+    this.goalY = checkPointY[this.counter];
+    if(this.goalX > this.position.x){
+      this.travelSpeed.set(5,0);
+    }
+    else if(this.goalY > this.position.y){
+      this.travelSpeed.set(0,5);
+    }
+    else if(this.goalY < this.position.y){
+      this.travelSpeed.set(0,-5);
+    }
+    else{
+      this.travelSpeed.set(0,0);
+      this.counter +=1;
+      if(this.counter >= checkPointX.length){
+        this.travelSpeed.set(5,0);
+      }
+    }
+  }
+
+  atCastle(){
+    if(this.position.x-15>=numCols*rectWidth){
+      return true;
+    }
   }
 
   enemyX(){
@@ -213,8 +246,10 @@ class Enemy{
 
   movement(){
     this.position.add(this.travelSpeed);
-    if(this.position.x > width){
-      this.position.x = 0;
+    for(let b of enemies){
+      if(b.atCastle()){
+        enemies.splice(b,1);
+      }
     }
   }
 
@@ -226,6 +261,7 @@ class Enemy{
 
   action(){
     this.createEnemy();
+    this.findPath();
     this.movement();
   }
 }
