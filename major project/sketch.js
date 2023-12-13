@@ -25,11 +25,10 @@ function setup() {
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
-  for(let i = 0;i<1;i++){
-    enemies.push(new Enemy(0,7));
-  }
   drawPath(0,7);
 }
+
+let intheway
 
 function draw() {
   row = getCurrentY();
@@ -37,13 +36,16 @@ function draw() {
   background(150);
   base();
   for(let d of defence){
+    d.createBase();
+  }
+  for(let d of defence){
     d.action();
   }
   for(let b of enemies){
     b.action();
   }
-  if(frameCount%60===0){
-    enemies.push(new Enemy(0,7));
+  if(enemies.length === 0){
+    enemies.push(new Enemy(0,7,5));
   }
 }
 
@@ -117,6 +119,10 @@ function drawPath(x,y){
   }
 }
 
+
+intheway
+
+
 class Tower{
   constructor(x,y,c){
     this.col = x;
@@ -143,8 +149,8 @@ class Tower{
     circle(this.x,this.y,this.size);
   }
 
-  createBullet(){
-    this.bullets.push(new Bullet(this.x,this.y,5,255));
+  createBullet(enemyX, enemyY) {
+    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed, 255));
   }
 
   bulletTravel(){
@@ -156,29 +162,52 @@ class Tower{
     }
   }
 
-  findEnemies(){
-    for(let b of enemies){
-      this.badX = b.enemyX;
-      this.badY = b.enemyY;
+  findEnemyDistance() {
+    let minDist = Infinity;
+    for (let b of enemies) {
+      let d = dist(this.x, this.y, b.enemyX(), b.enemyY());
+      if (d < minDist) {
+        minDist = b;
+      }
     }
+    return minDist;
+  }
+
+  findNearestEnemy() {
+    let minDist = Infinity;
+    let nearestEnemy;
+    for (let b of enemies) {
+      let d = dist(this.x, this.y, b.enemyX(), b.enemyY());
+      if (d < minDist) {
+        minDist = d;
+        nearestEnemy = b;
+      }
+    }
+    return nearestEnemy;
   }
 
   action(){
-    this.createBase();
-    this.findEnemies();
-    this.counter+=1;
-    if(this.counter%(this.fireRate*60)===0){ 
-      this.createBullet();
+    this.counter += 1;
+    if (this.counter % (this.fireRate * 60)===0) {
+      let nearestEnemy = this.findNearestEnemy();
+      if (nearestEnemy) {
+        this.createBullet(nearestEnemy.enemyX(), nearestEnemy.enemyY(),nearestEnemy.enemyDirection);
+      }
     }
+
     this.bulletTravel();
   }
 
 }
 
+intheway
+
 class Bullet{
-  constructor(x,y,speed,c){
-    this.position = createVector(x,y);
-    this.bulletSpeed = createVector(speed,0);
+  constructor(x, y, targetX, targetY, speed, c) {
+    this.position = createVector(x, y);
+    this.target = createVector(targetX, targetY);
+    this.direction = this.target.copy().sub(this.position).normalize();
+    this.bulletSpeed = this.direction.copy().mult(speed);
     this.c = c;
   }
 
@@ -203,36 +232,43 @@ class Bullet{
   }
 }
 
+intheway
+
 class Enemy{
-  constructor(x,y){
+  constructor(x,y,s){
     this.position = createVector(x,y*rectHeight+rectHeight/2);
     this.travelSpeed = createVector(0,0);
     this.counter = 0;
+    this.speed = s;
   }
 
   findPath(){
     this.goalX = checkPointX[this.counter];
     this.goalY = checkPointY[this.counter];
     if(this.goalX > this.position.x){
-      this.travelSpeed.set(5,0);
+      this.travelSpeed.set(this.speed,0);
+      this.direction = 2;
     }
     else if(this.goalY > this.position.y){
-      this.travelSpeed.set(0,5);
+      this.travelSpeed.set(0,this.speed );
+      this.direction = 3;
     }
     else if(this.goalY < this.position.y){
-      this.travelSpeed.set(0,-5);
+      this.travelSpeed.set(0,-this.speed );
+      this.direction = 1;
     }
     else{
       this.travelSpeed.set(0,0);
       this.counter +=1;
       if(this.counter >= checkPointX.length){
-        this.travelSpeed.set(5,0);
+        this.travelSpeed.set(this.speed,0);
+        this.direction = 2;
       }
     }
   }
 
   atCastle(){
-    if(this.position.x-15>=numCols*rectWidth){
+    if(this.position.x-16>=numCols*rectWidth){
       return true;
     }
   }
@@ -242,6 +278,9 @@ class Enemy{
   }
   enemyY(){ 
     return this.position.y;
+  }
+  enemyDirection(){
+    return this.direction;
   }
 
   movement(){

@@ -1,124 +1,287 @@
-let numberOfEnemy1 = 100
-let classenemy1 = new Enemy1(numberOfEnemy1);
-let globalenemy1position = [];   
-let isFireTowerPressed = false;
-let FireTowerPos = [];    // Position of all FireTowers => [x,y]
-let FireTowerRange = 300;
-let FireTowerAngle = 0;
+// Project Title
+// Your Name
+// Date
+//
+// Extra for Experts:
+// - describe what you did to take this project "above and beyond"
 
 
-class Enemy1
-{
-    constructor(number_of_enemies)
-    {
-        this.number_of_enemies = number_of_enemies;
-        this.enemy_position = [];
-        this.enemy1speed = 4;
 
-    }
-    enemy1_spawn()
-    {
-      let randomx = random(-300, -100);
-        for(let i=0; i<this.number_of_enemies; i++)
-        {
-          let positionx = randomx;
-          let positiony = 100;
 
-            this.enemy_position.push([positionx + (-i*50), positiony]);
-            globalenemy1position.push([positionx + (-i*50), positiony]);
-            image(enemy1, this.enemy_position[i][0], this.enemy_position[i][1]);
-        }
+let numRows = 15;
+let numCols = 15;
+let rectWidth = 75;
+let rectHeight =75;
+let row,col;
+let defence = [];
+let grid = [];
+let enemies = [];
+let checkPointX = [];
+let checkPointY = [];
 
-    }
 
-    enemy1_move()
-    {
-        for(let i = 0; i < this.enemy_position.length; i++)
-        {
-            image(enemy1, this.enemy_position[i][0], this.enemy_position[i][1]);
-
-            if (this.enemy_position[i][0] >= 200 && this.enemy_position[i][1] <= 450 && this.enemy_position[i][0] < 599)
-            {
-                this.enemy_position[i][1] += this.enemy1speed;
-                globalenemy1position[i][1] += this.enemy1speed;
-            }   
-
-            else if (this.enemy_position[i][1] >= 100 && this.enemy_position[i][0] >= 600)
-            {
-                this.enemy_position[i][1] -= this.enemy1speed;
-                globalenemy1position[i][1] -= this.enemy1speed;
-            }
-
-            else if (this.enemy_position[i][0] >= 750)
-            {
-                this.enemy_position[i][0] = 750;
-                lives --;
-                this.enemy_position.shift();
-                globalenemy1position.shift();
-            }   
-
-            else
-            {
-                this.enemy_position[i][0] += this.enemy1speed;
-                globalenemy1position[i][0] += this.enemy1speed;
-            }
-
-        }
-    }
+function setup() {
+  createCanvas(numCols*rectWidth+200, numRows*rectHeight);
+  for (let i = 0; i < numRows; i++) {
+    grid.push(Array(numCols).fill(0));
+  }
+  drawPath(0,7);
 }
 
-function draw() 
-{
-
-    background(60, 238, 161);
-    classenemy1.enemy1_move();
-    rect(750, 70, 50, 100);
-    ShowLives();
-    if (isFireTowerPressed == true) 
-    {
-        image(firetowerbaseImg, mouseX - 28, mouseY - 28);
-        noFill();
-        stroke(0,0,0);
-        strokeWeight(1);
-        circle(mouseX, mouseY, 300);
-    }
-    for (let i = 0; i < FireTowerPos.length; i++) 
-    {
-        image(firetowerbaseImg, FireTowerPos[i][0], FireTowerPos[i][1]);
-
-        if (globalenemy1position.length >= 1)
-        {
-          let gunx = FireTowerPos[i][0] +28;
-          let guny = FireTowerPos[i][1]+25;
-          let gunrange = FireTowerPos[i][3];
-
-            for (j=0; j<globalenemy1position.length; j++)
-            {
-
-                // Need help with this statement here
-                pointEnemy(globalenemy1position[j][0], globalenemy1position[j][1], gunx, guny, FireTowerPos[i][2], FireTowerPos[i][3]);
-                
-            }
-        }
-        else
-        {
-            image(firetowerturretImg, FireTowerPos[i][0], FireTowerPos[i][1]-20);
-        }
-    }
+function draw() {
+  row = getCurrentY();
+  col = getCurrentX();
+  background(150);
+  base();
+  for(let d of defence){
+    d.createBase();
+  }
+  for(let d of defence){
+    d.action();
+  }
+  for(let b of enemies){
+    b.action();
+  }
+  if(frameCount%60===0){
+    enemies.push(new Enemy(0,7,5));
+  }
 }
 
-function pointEnemy(enemyx, enemyy, gunx, guny, gunangle, gunrange)
-{
-    const isWithinRange = dist(enemyx, enemyy, gunx, guny) < gunrange;
-    if(isWithinRange)
-    {
-        gunangle = atan2(enemyy - guny, enemyx - gunx) + radians(90);
+function base(){
+  for(let y = 0;y<numRows;y++){
+    for(let x = 0;x<numCols;x++){
+      if(grid[x][y] === 0){
+        fill(0,255,0);
+      }
+      if(grid[x][y] === 1){
+        fill(100);
+      }
+      if(grid[x][y] === 2){
+        fill("brown");
+      }
+      rect(x*rectWidth,y*rectHeight,rectWidth,rectHeight);
     }
-        push();
-        translate(gunx, guny);
-        // rect(-25, -20, 50, 40) // Draw the gun base
-        // ellipse(0, 0, gun.range*2) // display the gun range
-        rotate(gunangle);
-        image(firetowerturretImg, -28, -45); // Set the offset of the gun sprite and draw the gun
-        pop();
+  }
+}
+
+function getCurrentX(){
+  let constrainMouseX = constrain(mouseX, 0, numCols*rectWidth-1);
+  return floor(constrainMouseX/rectWidth); 
+}
+
+function getCurrentY(){
+  let constrainMouseY = constrain(mouseY, 0, height-1);
+  return floor(constrainMouseY/rectHeight);
+}
+
+function mousePressed(){
+  if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
+    if(grid[col][row] === 0){
+      defence.push(new Tower(col,row,255));
+      grid[col][row] = 1;
+    }
+  }
+}
+
+function drawPath(x,y){
+  let direction = floor(random(4));
+  while(direction >4 || direction<0 ){
+    direction = floor(random(4));
+  }
+  if(x < 15){
+    grid[x][y] = 2;
+    checkPointX.push(x*rectWidth+rectWidth/2);
+    checkPointY.push(y*rectHeight+rectHeight/2);
+    if(direction === 0 || direction === 1 ){
+      drawPath(x+1,y);
+    }
+    else if(direction === 2 && y!==14){
+      if(grid[x][y+1]===2){
+        drawPath(x+1,y);
+      }
+      else{
+        drawPath(x,y+1);
+      }
+    }
+    else if(direction === 3 && y!==0){
+      if(grid[x][y-1]===2){
+        drawPath(x+1,y);
+      }
+      else{
+        drawPath(x,y-1);
+      }
+    }
+    else{
+      drawPath(x+1,y);
+    }
+  }
+}
+
+
+let intheway = 9
+
+
+class Tower{
+  constructor(x,y,c){
+    this.col = x;
+    this.row = y;
+    this.x = x*rectWidth+rectWidth/2;
+    this.y = y*rectHeight+rectHeight/2;
+    this.size = rectWidth;
+    this.fireRate = 1;
+    this.counter = 0;
+    this.bullets = [];
+    this.bulletSpeed = 5;
+    this.c =  c;
+  }
+
+  getColPosition(){
+    return this.col;
+  }
+  getRowPosition(){
+    return this.row;
+  }
+
+  createBase(){
+    fill(this.c);
+    circle(this.x,this.y,this.size);
+  }
+
+  findNearestEnemy() {
+    let minDist = Infinity;
+    let nearestEnemy;
+
+    for (let enemy of enemies) {
+      let d = dist(this.x, this.y, enemy.enemyX(), enemy.enemyY());
+      if (d < minDist) {
+        minDist = d;
+        nearestEnemy = enemy;
+      }
+    }
+
+    return nearestEnemy;
+  }
+
+  createBullet(enemyX, enemyY) {
+    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed, 255));
+  }
+
+  bulletTravel(){
+    for(let b of this.bullets){
+      b.fire();
+      if(b.offscreen()){
+        this.bullets.splice(b,1);
+      }
+    }
+  }
+
+  action(){
+    this.counter += 1;
+    if (this.counter % (this.fireRate * 60) === 0) {
+      let nearestEnemy = this.findNearestEnemy();
+      if (nearestEnemy) {
+        this.createBullet(nearestEnemy.enemyX(), nearestEnemy.enemyY());
+      }
+    }
+
+    this.bulletTravel();
+  }
+}
+
+intheway
+
+class Bullet{
+  constructor(x, y, targetX, targetY, speed, c) {
+    this.position = createVector(x, y);
+    this.target = createVector(targetX, targetY);
+    this.direction = this.target.copy().sub(this.position).normalize();
+    this.bulletSpeed = this.direction.copy().mult(speed);
+    this.c = c;
+  }
+
+  createBase(){
+    fill(this.c);
+    circle(this.position.x,this.position.y,15);
+  }
+
+  movement(){
+    this.position.add(this.bulletSpeed);
+  }
+
+  fire(){
+    this.createBase();
+    this.movement();
+  }
+
+  offscreen(){
+    if(this.position.x > numCols*rectWidth || this.position.x < 0 || this.position.y > height || this.position.y < 0){
+      return true;
+    }
+  }
+}
+
+intheway
+
+class Enemy{
+  constructor(x,y,s){
+    this.position = createVector(x,y*rectHeight+rectHeight/2);
+    this.travelSpeed = createVector(0,0);
+    this.counter = 0;
+    this.speed = s;
+  }
+
+  findPath(){
+    this.goalX = checkPointX[this.counter];
+    this.goalY = checkPointY[this.counter];
+    if(this.goalX > this.position.x){
+      this.travelSpeed.set(this.speed,0);
+    }
+    else if(this.goalY > this.position.y){
+      this.travelSpeed.set(0,this.speed );
+    }
+    else if(this.goalY < this.position.y){
+      this.travelSpeed.set(0,-this.speed );
+    }
+    else{
+      this.travelSpeed.set(0,0);
+      this.counter +=1;
+      if(this.counter >= checkPointX.length){
+        this.travelSpeed.set(this.speed,0);
+      }
+    }
+  }
+
+  atCastle(){
+    if(this.position.x-15>=numCols*rectWidth){
+      return true;
+    }
+  }
+
+  enemyX(){
+    return this.position.x;
+  }
+  enemyY(){ 
+    return this.position.y;
+  }
+
+  movement(){
+    this.position.add(this.travelSpeed);
+    for(let b of enemies){
+      if(b.atCastle()){
+        enemies.splice(b,1);
+      }
+    }
+  }
+
+  createEnemy(){
+    fill("red");
+    circle(this.position.x,this.position.y,30);
+    fill(255);
+  }
+
+  action(){
+    this.createEnemy();
+    this.findPath();
+    this.movement();
+  }
 }
