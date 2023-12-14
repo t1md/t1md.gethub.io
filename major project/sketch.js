@@ -45,7 +45,7 @@ function draw() {
     b.action();
   }
   if(enemies.length === 0){
-    enemies.push(new Enemy(0,7,5));
+    enemies.push(new Enemy(0,7,2.5));
   }
 }
 
@@ -135,6 +135,7 @@ class Tower{
     this.bullets = [];
     this.bulletSpeed = 5;
     this.c =  c;
+    this.range = 50;
   }
 
   getColPosition(){
@@ -147,6 +148,7 @@ class Tower{
   createBase(){
     fill(this.c);
     circle(this.x,this.y,this.size);
+    this.showRange();
   }
 
   createBullet(enemyX, enemyY) {
@@ -162,25 +164,39 @@ class Tower{
     }
   }
 
+  showRange(){
+    noFill();
+    circle(this.x,this.y,this.range*10);
+  }
+
   findEnemyDistance() {
     let minDist = Infinity;
     for (let b of enemies) {
       let d = dist(this.x, this.y, b.enemyX(), b.enemyY());
       if (d < minDist) {
-        minDist = b;
+        minDist = d;
       }
     }
     return minDist;
+  }
+
+  predictEnemyPosition(enemy) {
+    let timeToHit = dist(this.x, this.y, enemy.enemyX(), enemy.enemyY()) / this.bulletSpeed;
+    let futureX = enemy.enemyX() + enemy.travelSpeed.x * timeToHit;
+    let futureY = enemy.enemyY() + enemy.travelSpeed.y * timeToHit;
+
+    return createVector(futureX, futureY);
   }
 
   findNearestEnemy() {
     let minDist = Infinity;
     let nearestEnemy;
     for (let b of enemies) {
-      let d = dist(this.x, this.y, b.enemyX(), b.enemyY());
+      let predictedPos = this.predictEnemyPosition(b);
+      let d = dist(this.x, this.y, predictedPos.x, predictedPos.y);
       if (d < minDist) {
         minDist = d;
-        nearestEnemy = b;
+        nearestEnemy = {b,predictedPos};
       }
     }
     return nearestEnemy;
@@ -190,8 +206,9 @@ class Tower{
     this.counter += 1;
     if (this.counter % (this.fireRate * 60)===0) {
       let nearestEnemy = this.findNearestEnemy();
-      if (nearestEnemy) {
-        this.createBullet(nearestEnemy.enemyX(), nearestEnemy.enemyY(),nearestEnemy.enemyDirection);
+      let distance = this.findEnemyDistance();
+      if (enemies.length!==0 && distance<this.range*5.5) {
+        this.createBullet(nearestEnemy.predictedPos.x, nearestEnemy.predictedPos.y);
       }
     }
 
@@ -240,6 +257,7 @@ class Enemy{
     this.travelSpeed = createVector(0,0);
     this.counter = 0;
     this.speed = s;
+    this.health = 10;
   }
 
   findPath(){
@@ -251,18 +269,15 @@ class Enemy{
     }
     else if(this.goalY > this.position.y){
       this.travelSpeed.set(0,this.speed );
-      this.direction = 3;
     }
     else if(this.goalY < this.position.y){
       this.travelSpeed.set(0,-this.speed );
-      this.direction = 1;
     }
     else{
       this.travelSpeed.set(0,0);
       this.counter +=1;
       if(this.counter >= checkPointX.length){
         this.travelSpeed.set(this.speed,0);
-        this.direction = 2;
       }
     }
   }
@@ -278,9 +293,6 @@ class Enemy{
   }
   enemyY(){ 
     return this.position.y;
-  }
-  enemyDirection(){
-    return this.direction;
   }
 
   movement(){
