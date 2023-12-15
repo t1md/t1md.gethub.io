@@ -5,7 +5,7 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-
+let health;
 
 
 let numRows = 15;
@@ -18,6 +18,11 @@ let grid = [];
 let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
+let lives = 10;
+
+function preload(){
+  health = loadImage("pictures/health.png");
+}
 
 
 function setup() {
@@ -35,6 +40,7 @@ function draw() {
   col = getCurrentX();
   background(150);
   base();
+  drawStats();
   for(let d of defence){
     d.createBase();
   }
@@ -45,11 +51,21 @@ function draw() {
     b.action();
   }
   if(enemies.length === 0){
-    enemies.push(new Enemy(0,7,2.5));
+    enemies.push(new Enemy(0,7,2.5,10));
   }
 }
 
+function drawStats(){
+  textSize(35);
+  fill(0);
+  text("Lives: "+lives, numCols*rectWidth+50, height*0.06);
+  image(health, numCols*rectWidth, height*0.03, 50,50);
+  
+  // text()
+}
+
 function base(){
+  noStroke();
   for(let y = 0;y<numRows;y++){
     for(let x = 0;x<numCols;x++){
       if(grid[x][y] === 0){
@@ -64,6 +80,7 @@ function base(){
       rect(x*rectWidth,y*rectHeight,rectWidth,rectHeight);
     }
   }
+  stroke(1);
 }
 
 function getCurrentX(){
@@ -136,6 +153,8 @@ class Tower{
     this.bulletSpeed = 5;
     this.c =  c;
     this.range = 50;
+    this.damage = 5;
+    this.pierce = 1;
   }
 
   getColPosition(){
@@ -152,13 +171,13 @@ class Tower{
   }
 
   createBullet(enemyX, enemyY) {
-    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed, 255));
+    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed, 255, this.damage, this.pierce));
   }
 
   bulletTravel(){
     for(let b of this.bullets){
       b.fire();
-      if(b.offscreen()){
+      if(b.offscreen() || b.hit()){
         this.bullets.splice(b,1);
       }
     }
@@ -202,9 +221,10 @@ class Tower{
     return nearestEnemy;
   }
 
+
   action(){
     this.counter += 1;
-    if (this.counter % (this.fireRate * 60)===0) {
+    if (this.counter % (60/this.fireRate)===0) {
       let nearestEnemy = this.findNearestEnemy();
       let distance = this.findEnemyDistance();
       if (enemies.length!==0 && distance<this.range*5.5) {
@@ -220,17 +240,30 @@ class Tower{
 intheway
 
 class Bullet{
-  constructor(x, y, targetX, targetY, speed, c) {
+  constructor(x, y, targetX, targetY, speed, c, damage,pierce) {
     this.position = createVector(x, y);
     this.target = createVector(targetX, targetY);
     this.direction = this.target.copy().sub(this.position).normalize();
     this.bulletSpeed = this.direction.copy().mult(speed);
     this.c = c;
+    this.damage = damage;
+    this.pierce = pierce;
   }
 
   createBase(){
     fill(this.c);
-    circle(this.position.x,this.position.y,15);
+    circle(this.position.x,this.position.y,10);
+  }
+
+  hitEnemy(){
+    for (let b of enemies) {
+      let d = dist(this.position.x, this.position.y, b.enemyX(), b.enemyY());
+      if(d<20){
+        b.takeDamage(this.damage);
+        this.pierce-=1;
+      }
+    }
+
   }
 
   movement(){
@@ -240,10 +273,17 @@ class Bullet{
   fire(){
     this.createBase();
     this.movement();
+    this.hitEnemy();
   }
 
   offscreen(){
     if(this.position.x > numCols*rectWidth || this.position.x < 0 || this.position.y > height || this.position.y < 0){
+      return true;
+    }
+  }
+
+  hit(){
+    if(this.pierce<=0){
       return true;
     }
   }
@@ -252,12 +292,12 @@ class Bullet{
 intheway
 
 class Enemy{
-  constructor(x,y,s){
+  constructor(x,y,s,health){
     this.position = createVector(x,y*rectHeight+rectHeight/2);
     this.travelSpeed = createVector(0,0);
     this.counter = 0;
     this.speed = s;
-    this.health = 10;
+    this.health = health;
   }
 
   findPath(){
@@ -281,6 +321,16 @@ class Enemy{
       }
     }
   }
+  
+  takeDamage(damage){
+    this.health-=damage;
+  }
+
+  dead(){
+    if(this.health <= 0){
+      return true;
+    }
+  }
 
   atCastle(){
     if(this.position.x-16>=numCols*rectWidth){
@@ -300,6 +350,10 @@ class Enemy{
     for(let b of enemies){
       if(b.atCastle()){
         enemies.splice(b,1);
+        lives-=1;
+      }
+      else if(b.dead()){
+        enemies.splice(b,1);
       }
     }
   }
@@ -316,3 +370,4 @@ class Enemy{
     this.movement();
   }
 }
+
