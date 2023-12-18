@@ -6,30 +6,35 @@
 // - describe what you did to take this project "above and beyond"
 
 let health;
+let dollarSign;
 
 
-let numRows = 15;
-let numCols = 15;
-let rectWidth = 75;
-let rectHeight =75;
+let numRows = 16;
+let numCols = 16;
+let rectWidth = 80;
+let rectHeight =80;
 let row,col;
 let defence = [];
 let grid = [];
 let enemies = [];
+let buttons = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
+let bank = 200;
 
 function preload(){
   health = loadImage("pictures/health.png");
+  dollarSign = loadImage("pictures/money.png");
 }
 
 
 function setup() {
-  createCanvas(numCols*rectWidth+200, numRows*rectHeight);
+  createCanvas(numCols*rectWidth+300, numRows*rectHeight);
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
+  buttons.push(numCols*rectWidth, height*0.5,)
   drawPath(0,7);
 }
 
@@ -58,10 +63,17 @@ function draw() {
 function drawStats(){
   textSize(35);
   fill(0);
-  text("Lives: "+lives, numCols*rectWidth+50, height*0.06);
-  image(health, numCols*rectWidth, height*0.03, 50,50);
-  
-  // text()
+  text("Lives: "+lives, numCols*rectWidth+50, height*0.04);
+  image(health, numCols*rectWidth, height*0.01, 50,50);
+  text("Money: "+ bank, numCols*rectWidth+50, height*0.09 );
+  image(dollarSign, numCols*rectWidth+5, height*0.06, 40,50);
+}
+
+function cost(amount){
+  bank-=amount;
+}
+function gain(amount){
+  bank+=amount;
 }
 
 function base(){
@@ -96,8 +108,11 @@ function getCurrentY(){
 function mousePressed(){
   if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
     if(grid[col][row] === 0){
-      defence.push(new Tower(col,row,255));
-      grid[col][row] = 1;
+      if(bank>=200 || keyCode === SHIFT){
+        defence.push(new Tower(col,row,255));
+        grid[col][row] = 1;
+        cost(200);
+      }
     }
   }
 }
@@ -107,7 +122,7 @@ function drawPath(x,y){
   while(direction >4 || direction<0 ){
     direction = floor(random(4));
   }
-  if(x < 15){
+  if(x < numCols){
     grid[x][y] = 2;
     checkPointX.push(x*rectWidth+rectWidth/2);
     checkPointY.push(y*rectHeight+rectHeight/2);
@@ -153,8 +168,6 @@ class Tower{
     this.bulletSpeed = 5;
     this.c =  c;
     this.range = 50;
-    this.damage = 5;
-    this.pierce = 1;
   }
 
   getColPosition(){
@@ -167,11 +180,10 @@ class Tower{
   createBase(){
     fill(this.c);
     circle(this.x,this.y,this.size);
-    this.showRange();
   }
 
   createBullet(enemyX, enemyY) {
-    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed, 255, this.damage, this.pierce));
+    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed,this.c,5,1));
   }
 
   bulletTravel(){
@@ -240,14 +252,15 @@ class Tower{
 intheway
 
 class Bullet{
-  constructor(x, y, targetX, targetY, speed, c, damage,pierce) {
+  constructor(x, y, targetX, targetY, speed,c, damage, pierce) {
     this.position = createVector(x, y);
     this.target = createVector(targetX, targetY);
     this.direction = this.target.copy().sub(this.position).normalize();
     this.bulletSpeed = this.direction.copy().mult(speed);
-    this.c = c;
     this.damage = damage;
     this.pierce = pierce;
+    this.c = c;
+    this.hasHit = [];
   }
 
   createBase(){
@@ -259,8 +272,20 @@ class Bullet{
     for (let b of enemies) {
       let d = dist(this.position.x, this.position.y, b.enemyX(), b.enemyY());
       if(d<20){
-        b.takeDamage(this.damage);
-        this.pierce-=1;
+        let hit = false;
+        for(let h of this.hasHit){
+          if(h === b ){
+            hit = true;
+          }
+          else{
+            hit = false;
+          }
+        }
+        if(hit === false){
+          this.hasHit.push(b);
+          b.takeDamage(this.damage);
+          this.pierce-=1;
+        }
       }
     }
 
@@ -283,7 +308,7 @@ class Bullet{
   }
 
   hit(){
-    if(this.pierce<=0){
+    if(this.pierce<1){
       return true;
     }
   }
@@ -354,6 +379,7 @@ class Enemy{
       }
       else if(b.dead()){
         enemies.splice(b,1);
+        gain(50);
       }
     }
   }
@@ -371,3 +397,17 @@ class Enemy{
   }
 }
 
+intheway
+
+class Button{
+
+  constructor(x,y,s){
+    this.x = x;
+    this.y = y;
+    this.s = s;
+  }
+
+  create(){
+    square(this.x,this.y,this.s,45,45,45,45);
+  }
+}
