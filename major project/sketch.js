@@ -17,11 +17,11 @@ let row,col;
 let defence = [];
 let grid = [];
 let enemies = [];
-let buttons = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
 let bank = 200;
+let initialize = 0;
 
 function preload(){
   health = loadImage("pictures/health.png");
@@ -34,13 +34,14 @@ function setup() {
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
-  buttons.push(numCols*rectWidth, height*0.5,)
   drawPath(0,7);
 }
 
 let intheway
 
 function draw() {
+  rectMode(CORNER);
+  strokeWeight(1);
   row = getCurrentY();
   col = getCurrentX();
   background(150);
@@ -57,6 +58,9 @@ function draw() {
   }
   if(enemies.length === 0){
     enemies.push(new Enemy(0,7,2.5,10));
+  }
+  if (initialize!== 0){
+    initialize.openUpgrades();
   }
 }
 
@@ -114,6 +118,15 @@ function mousePressed(){
         cost(200);
       }
     }
+    else if(grid[col][row] === 1){
+      for(let d of defence){
+        let dCol = d.getColPosition();
+        let dRow = d.getRowPosition();
+        if(grid[dCol][dRow] === grid[col][row]){
+          initialize = d;
+        }
+      }
+    }
   }
 }
 
@@ -168,6 +181,10 @@ class Tower{
     this.bulletSpeed = 5;
     this.c =  c;
     this.range = 50;
+    this.damage = 5;
+    this.pierce = 1;
+    this.damageDealt = 0;
+    this.exitButton;
   }
 
   getColPosition(){
@@ -183,7 +200,7 @@ class Tower{
   }
 
   createBullet(enemyX, enemyY) {
-    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed,this.c,5,1));
+    this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed,this.c,this.damage,this.pierce));
   }
 
   bulletTravel(){
@@ -192,7 +209,23 @@ class Tower{
       if(b.offscreen() || b.hit()){
         this.bullets.splice(b,1);
       }
+      if(b.hit()){
+        this.damageDealt += b.findDamage();
+      }
     }
+  }
+
+  openUpgrades(){
+    this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50);
+    textSize(35);
+    fill(0);
+    text("fireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
+    text("Damage: " + this.damage,numCols*rectWidth+10, height*0.175);
+    text("bulletSpeed: " + this.bulletSpeed,numCols*rectWidth+10, height*0.2);
+    text("range: " + this.range,numCols*rectWidth+10, height*0.225);
+    text("pierce: " + this.pierce,numCols*rectWidth+10, height*0.25);
+    text("damageDealt: " + this.damageDealt,numCols*rectWidth+10, height*0.9);
+    this.exitButton.exitAction();
   }
 
   showRange(){
@@ -261,11 +294,16 @@ class Bullet{
     this.pierce = pierce;
     this.c = c;
     this.hasHit = [];
+    this.damageDealt = 0;
   }
 
   createBase(){
     fill(this.c);
     circle(this.position.x,this.position.y,10);
+  }
+
+  findDamage(){
+    return this.damageDealt;
   }
 
   hitEnemy(){
@@ -285,6 +323,7 @@ class Bullet{
           this.hasHit.push(b);
           b.takeDamage(this.damage);
           this.pierce-=1;
+          this.damageDealt += this.damage;
         }
       }
     }
@@ -397,17 +436,34 @@ class Enemy{
   }
 }
 
-intheway
-
 class Button{
-
   constructor(x,y,s){
     this.x = x;
     this.y = y;
     this.s = s;
+    this.r = 255;
   }
 
-  create(){
-    square(this.x,this.y,this.s,45,45,45,45);
+  exitInitialize(){
+    fill(this.r,0,0);
+    // rectMode(CENTER);
+    square(this.x,this.y,this.s+5,10,10,10,10);
+    fill(0);
+    strokeWeight(5);
+    line(this.x+5,this.y+5,this.x+this.s,this.y+this.s);
+    line(this.x+this.s,this.y+5,this.x+5,this.y+this.s);
+  }
+
+  exitHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.s && mouseY<this.y+this.s){
+      this.r  = 200;
+    }
+    else{
+      this.r = 255;
+    }
+  }
+  exitAction(){
+    this.exitHoverOver();
+    this.exitInitialize();
   }
 }
