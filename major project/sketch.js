@@ -22,6 +22,11 @@ let checkPointY = [];
 let lives = 10;
 let bank = 200;
 let initialize = 0;
+let exitUpgrades;
+let waveCount = 0;
+let enemyCount = 0;
+
+
 
 function preload(){
   health = loadImage("pictures/health.png");
@@ -42,11 +47,10 @@ let intheway
 function draw() {
   rectMode(CORNER);
   strokeWeight(1);
-  row = getCurrentY();
   col = getCurrentX();
+  row = getCurrentY();
   background(150);
   base();
-  drawStats();
   for(let d of defence){
     d.createBase();
   }
@@ -56,12 +60,23 @@ function draw() {
   for(let b of enemies){
     b.action();
   }
-  if(enemies.length === 0){
-    enemies.push(new Enemy(0,7,2.5,10));
-  }
+  waves();
   if (initialize!== 0){
     initialize.openUpgrades();
   }
+  drawStats();
+}
+
+function waves(){
+  if(enemies.length <=0 && enemyCount === 0){
+    waveCount+=1;
+    enemyCount = waveCount*2;
+  }
+  if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>0){
+    enemies.push(new Enemy(0,7,2.5,10));
+    enemyCount-=1;
+  }
+
 }
 
 function drawStats(){
@@ -71,6 +86,7 @@ function drawStats(){
   image(health, numCols*rectWidth, height*0.01, 50,50);
   text("Money: "+ bank, numCols*rectWidth+50, height*0.09 );
   image(dollarSign, numCols*rectWidth+5, height*0.06, 40,50);
+  text("Wave: "+ waveCount, 10, height*0.03);
 }
 
 function cost(amount){
@@ -122,11 +138,15 @@ function mousePressed(){
       for(let d of defence){
         let dCol = d.getColPosition();
         let dRow = d.getRowPosition();
-        if(grid[dCol][dRow] === grid[col][row]){
+        if(dCol === col && dRow === row){
           initialize = d;
         }
       }
     }
+  }
+  if(exitUpgrades === true){
+    initialize = 0;
+    exitUpgrades = false;
   }
 }
 
@@ -216,9 +236,8 @@ class Tower{
   }
 
   openUpgrades(){
-    this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50);
-    textSize(35);
     fill(0);
+    this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50);
     text("fireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
     text("Damage: " + this.damage,numCols*rectWidth+10, height*0.175);
     text("bulletSpeed: " + this.bulletSpeed,numCols*rectWidth+10, height*0.2);
@@ -409,18 +428,23 @@ class Enemy{
     return this.position.y;
   }
 
-  movement(){
-    this.position.add(this.travelSpeed);
+  remover(){
+    let i = -1;
     for(let b of enemies){
+      i++;
       if(b.atCastle()){
-        enemies.splice(b,1);
+        enemies.splice(i,1);
         lives-=1;
       }
       else if(b.dead()){
-        enemies.splice(b,1);
+        enemies.splice(i,1);
         gain(50);
       }
     }
+  }
+
+  movement(){
+    this.position.add(this.travelSpeed);
   }
 
   createEnemy(){
@@ -433,6 +457,7 @@ class Enemy{
     this.createEnemy();
     this.findPath();
     this.movement();
+    this.remover();
   }
 }
 
@@ -452,14 +477,17 @@ class Button{
     strokeWeight(5);
     line(this.x+5,this.y+5,this.x+this.s,this.y+this.s);
     line(this.x+this.s,this.y+5,this.x+5,this.y+this.s);
+    strokeWeight(1);
   }
 
   exitHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.s && mouseY<this.y+this.s){
       this.r  = 200;
+      exitUpgrades = true;
     }
     else{
       this.r = 255;
+      exitUpgrades = false;
     }
   }
   exitAction(){
