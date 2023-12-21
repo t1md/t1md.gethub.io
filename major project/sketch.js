@@ -7,6 +7,7 @@
 
 let health;
 let dollarSign;
+let settings;
 
 
 let numRows = 16;
@@ -25,26 +26,50 @@ let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
 let enemyCount = 0;
+let overlay;
+let start = false;
+let startGame;
+let setting;
+let settingButton;
 
 
 
 function preload(){
   health = loadImage("pictures/health.png");
   dollarSign = loadImage("pictures/money.png");
+  settings = loadImage("pictures/settings.png");
 }
 
 
 function setup() {
   createCanvas(numCols*rectWidth+300, numRows*rectHeight);
+  overlay = createGraphics(numCols*rectWidth+300, numRows*rectHeight);
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
   drawPath(0,7);
+  settingButton = new Button(width*0.95,height*0.01,50,50);
 }
 
 let intheway
 
 function draw() {
+  if(start === false){
+    startScreen();
+  }
+  if(start === true){
+    runProgram();
+  }
+  settingButton.settingAction();
+}
+
+function startScreen(){
+  background(0,255,0);
+  let startButton = new Button(width*0.3,height*0.3,width*0.4,height*0.1,"Start");
+  startButton.startAction();
+}
+
+function runProgram(){
   rectMode(CORNER);
   strokeWeight(1);
   col = getCurrentX();
@@ -126,27 +151,35 @@ function getCurrentY(){
 }
 
 function mousePressed(){
-  if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
-    if(grid[col][row] === 0){
-      if(bank>=200 || keyCode === SHIFT){
-        defence.push(new Tower(col,row,255));
-        grid[col][row] = 1;
-        cost(200);
-      }
+  if (start === true){
+    if(exitUpgrades === true){
+      initialize = 0;
+      exitUpgrades = false;
     }
-    else if(grid[col][row] === 1){
-      for(let d of defence){
-        let dCol = d.getColPosition();
-        let dRow = d.getRowPosition();
-        if(dCol === col && dRow === row){
-          initialize = d;
+
+    else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
+      if(grid[col][row] === 0){
+        if(bank>=200){
+          defence.push(new Tower(col,row,255));
+          grid[col][row] = 1;
+          cost(200);
         }
       }
+      else if(grid[col][row] === 1){
+        for(let d of defence){
+          let dCol = d.getColPosition();
+          let dRow = d.getRowPosition();
+          if(dCol === col && dRow === row){
+            initialize = d;
+          }
+        }
+      }
+    
     }
   }
-  if(exitUpgrades === true){
-    initialize = 0;
-    exitUpgrades = false;
+  if(startGame === true){
+    start = true;
+    startGame = false;
   }
 }
 
@@ -195,7 +228,7 @@ class Tower{
     this.x = x*rectWidth+rectWidth/2;
     this.y = y*rectHeight+rectHeight/2;
     this.size = rectWidth;
-    this.fireRate = 1;
+    this.fireRate = 100;
     this.counter = 0;
     this.bullets = [];
     this.bulletSpeed = 5;
@@ -237,13 +270,14 @@ class Tower{
 
   openUpgrades(){
     fill(0);
-    this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50);
-    text("fireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
+    this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50,50);
+    text("FireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
     text("Damage: " + this.damage,numCols*rectWidth+10, height*0.175);
-    text("bulletSpeed: " + this.bulletSpeed,numCols*rectWidth+10, height*0.2);
-    text("range: " + this.range,numCols*rectWidth+10, height*0.225);
-    text("pierce: " + this.pierce,numCols*rectWidth+10, height*0.25);
-    text("damageDealt: " + this.damageDealt,numCols*rectWidth+10, height*0.9);
+    text("BulletSpeed: " + this.bulletSpeed,numCols*rectWidth+10, height*0.2);
+    text("Range: " + this.range,numCols*rectWidth+10, height*0.225);
+    text("Pierce: " + this.pierce,numCols*rectWidth+10, height*0.25);
+    textSize(25);
+    text("DamageDealt: " + this.damageDealt,numCols*rectWidth, height*0.9);
     this.exitButton.exitAction();
   }
 
@@ -288,7 +322,7 @@ class Tower{
 
   action(){
     this.counter += 1;
-    if (this.counter % (60/this.fireRate)===0) {
+    if (floor(this.counter % (60/this.fireRate))===0) {
       let nearestEnemy = this.findNearestEnemy();
       let distance = this.findEnemyDistance();
       if (enemies.length!==0 && distance<this.range*5.5) {
@@ -328,7 +362,7 @@ class Bullet{
   hitEnemy(){
     for (let b of enemies) {
       let d = dist(this.position.x, this.position.y, b.enemyX(), b.enemyY());
-      if(d<20){
+      if(d<20 && b.health>0){
         let hit = false;
         for(let h of this.hasHit){
           if(h === b ){
@@ -462,26 +496,64 @@ class Enemy{
 }
 
 class Button{
-  constructor(x,y,s){
+  constructor(x,y,w,h,message){
     this.x = x;
     this.y = y;
-    this.s = s;
-    this.r = 255;
+    this.w = w;
+    this.h = h;
+    this.r = 0;
+    this.g = 0;
+    this.b = 0;
+    this.gray = 0;
+    this.message = message;
+  }
+
+  textInitialize(){
+    fill(this.grey);
+    rect(this.x,this.y,this.w,this.h);
+    fill(0);
+    textAlign(CENTER,CENTER);
+    textSize(this.h);
+    text(this.message, this.x+this.w/2,this.y+this.h/2);
+    textAlign(LEFT,BASELINE);
+  }
+
+  startHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
+      this.grey = 100;
+      startGame = true;
+    }
+    else{
+      this.grey = 200;
+      startGame = false;
+    }
+  }
+
+  settingsInitialize(){
+    image(settings,this.x,this.y,this.w,this.h);
+  }
+
+  settingsHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
+      setting = true;
+    }
+    else{
+      setting = false;
+    }
   }
 
   exitInitialize(){
     fill(this.r,0,0);
-    // rectMode(CENTER);
-    square(this.x,this.y,this.s+5,10,10,10,10);
+    rect(this.x,this.y,this.w,this.h,10,10,10,10);
     fill(0);
     strokeWeight(5);
-    line(this.x+5,this.y+5,this.x+this.s,this.y+this.s);
-    line(this.x+this.s,this.y+5,this.x+5,this.y+this.s);
+    line(this.x+5,this.y+5,this.x+this.w-5,this.y+this.h-5);
+    line(this.x+this.w-5,this.y+5,this.x+5,this.y+this.h-5);
     strokeWeight(1);
   }
 
   exitHoverOver(){
-    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.s && mouseY<this.y+this.s){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.r  = 200;
       exitUpgrades = true;
     }
@@ -490,8 +562,19 @@ class Button{
       exitUpgrades = false;
     }
   }
+
   exitAction(){
     this.exitHoverOver();
     this.exitInitialize();
+  }
+
+  startAction(){
+    this.startHoverOver();
+    this.textInitialize();
+
+  }
+  settingAction(){
+    this.settingsHoverOver();
+    this.settingsInitialize();
   }
 }
