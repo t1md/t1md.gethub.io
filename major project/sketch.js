@@ -65,7 +65,7 @@ function draw() {
 
 function startScreen(){
   background(0,255,0);
-  let startButton = new Button(width*0.3,height*0.3,width*0.4,height*0.1,"Start");
+  let startButton = new Button(width*0.3,height*0.5,width*0.4,height*0.1,"Start");
   startButton.startAction();
 }
 
@@ -97,8 +97,16 @@ function waves(){
     waveCount+=1;
     enemyCount = waveCount*2;
   }
-  if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>0){
-    enemies.push(new Enemy(0,7,2.5,10));
+  if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>100){
+    enemies.push(new Enemy(0,7,10,50,"red"));
+    enemyCount-=20;
+  }
+  if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>10){
+    enemies.push(new Enemy(0,7,5,25,"blue"));
+    enemyCount-=5;
+  }
+  else if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>0){
+    enemies.push(new Enemy(0,7,2,10,"green"));
     enemyCount-=1;
   }
 
@@ -228,7 +236,7 @@ class Tower{
     this.x = x*rectWidth+rectWidth/2;
     this.y = y*rectHeight+rectHeight/2;
     this.size = rectWidth;
-    this.fireRate = 100;
+    this.fireRate = 1;
     this.counter = 0;
     this.bullets = [];
     this.bulletSpeed = 5;
@@ -238,6 +246,7 @@ class Tower{
     this.pierce = 1;
     this.damageDealt = 0;
     this.exitButton;
+    this.targeting = "first";
   }
 
   getColPosition(){
@@ -303,6 +312,7 @@ class Tower{
     let futureY = enemy.enemyY() + enemy.travelSpeed.y * timeToHit;
 
     return createVector(futureX, futureY);
+  
   }
 
   findNearestEnemy() {
@@ -319,8 +329,20 @@ class Tower{
     return nearestEnemy;
   }
 
+  findFirstEnemy(){
+    let firstEnemy;
+    let count = 1;
+    for(let b of enemies){
+      if(count===1){
+        let predictedPos = this.predictEnemyPosition(b);
+        firstEnemy = {b,predictedPos};
+        count-=1;
+      }
+    }
+    return firstEnemy;
+  }
 
-  action(){
+  nearestEnemyTarget(){
     this.counter += 1;
     if (floor(this.counter % (60/this.fireRate))===0) {
       let nearestEnemy = this.findNearestEnemy();
@@ -329,7 +351,27 @@ class Tower{
         this.createBullet(nearestEnemy.predictedPos.x, nearestEnemy.predictedPos.y);
       }
     }
+  }
 
+  firstEnemyTarget(){
+    this.counter += 1;
+    if (floor(this.counter % (60/this.fireRate))===0) {
+      let firstEnemy = this.findFirstEnemy();
+      let distance = this.findEnemyDistance();
+      if (enemies.length!==0 && distance<this.range*5.5) {
+        this.createBullet(firstEnemy.predictedPos.x, firstEnemy.predictedPos.y);
+      }
+    }
+  }
+
+
+  action(){
+    if(this.targeting === "first"){
+      this.firstEnemyTarget();
+    }
+    if(this.targeting === "near"){
+      this.nearestEnemyTarget();
+    }
     this.bulletTravel();
   }
 
@@ -409,12 +451,13 @@ class Bullet{
 intheway
 
 class Enemy{
-  constructor(x,y,s,health){
+  constructor(x,y,s,health, colour){
     this.position = createVector(x,y*rectHeight+rectHeight/2);
     this.travelSpeed = createVector(0,0);
     this.counter = 0;
     this.speed = s;
     this.health = health;
+    this.colour = colour;
   }
 
   findPath(){
@@ -482,7 +525,7 @@ class Enemy{
   }
 
   createEnemy(){
-    fill("red");
+    fill(this.colour);
     circle(this.position.x,this.position.y,30);
     fill(255);
   }
