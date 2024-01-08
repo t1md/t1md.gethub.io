@@ -31,8 +31,25 @@ let start = false;
 let startGame;
 let setting;
 let settingButton;
+let volume = 100;
+let gameOver = false;
+let exitGame;
 
-
+function reset(){
+  defence = [];
+  enemies = [];
+  grid = [];
+  checkPointX = [];
+  checkPointY = [];
+  lives = 10;
+  bank = 200;
+  waveCount = 0;
+  enemyCount = 0;
+  for (let i = 0; i < numRows; i++) {
+    grid.push(Array(numCols).fill(0));
+  }
+  drawPath(0,7);
+}
 
 function preload(){
   health = loadImage("pictures/health.png");
@@ -60,6 +77,9 @@ function draw() {
   if(start === true){
     runProgram();
   }
+  if(gameOver === true){
+    endScreen();
+  }
   settingButton.settingAction();
 }
 
@@ -67,6 +87,13 @@ function startScreen(){
   background(0,255,0);
   let startButton = new Button(width*0.3,height*0.5,width*0.4,height*0.1,"Start");
   startButton.startAction();
+}
+
+function endScreen(){
+  textSize(width*0.1)
+  text("you Lose!",width*0.3,height*0.4);
+  let exitButton = new Button(width*0.3,height*0.5,width*0.4,height*0.1,"Exit")
+  exitButton.exitAction();
 }
 
 function runProgram(){
@@ -90,6 +117,9 @@ function runProgram(){
     initialize.openUpgrades();
   }
   drawStats();
+  if(lives <=0){
+    gameOver = true;
+  }
 }
 
 function waves(){
@@ -97,19 +127,18 @@ function waves(){
     waveCount+=1;
     enemyCount = waveCount*2;
   }
-  if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>100){
-    enemies.push(new Enemy(0,7,10,50,"red"));
-    enemyCount-=20;
-  }
-  if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>10){
-    enemies.push(new Enemy(0,7,5,25,"blue"));
-    enemyCount-=5;
-  }
-  else if(floor(frameCount%(150/waveCount)) === 0 && enemyCount>0){
+  if(floor(frameCount%50) === 0 && enemyCount>0){
     enemies.push(new Enemy(0,7,2,10,"green"));
     enemyCount-=1;
+    if(floor(frameCount%60) === 0 && enemyCount>10){
+      enemies.push(new Enemy(0,7,4,25,"blue"));
+      enemyCount-=5;
+      if(floor(frameCount%80) === 0 && enemyCount>100){
+        enemies.push(new Enemy(0,7,10,50,"red"));
+        enemyCount-=20;
+      }
+    }
   }
-
 }
 
 function drawStats(){
@@ -159,7 +188,7 @@ function getCurrentY(){
 }
 
 function mousePressed(){
-  if (start === true){
+  if (start === true && gameOver === false){
     if(exitUpgrades === true){
       initialize = 0;
       exitUpgrades = false;
@@ -188,6 +217,12 @@ function mousePressed(){
   if(startGame === true){
     start = true;
     startGame = false;
+  }
+  if(exitGame === true){
+    start = false;
+    exitGame = false;
+    gameOver = false;
+    reset();
   }
 }
 
@@ -278,6 +313,8 @@ class Tower{
   }
 
   openUpgrades(){
+    noFill();
+    circle(this.x,this.y,this.range*10);
     fill(0);
     this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50,50);
     text("FireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
@@ -287,7 +324,7 @@ class Tower{
     text("Pierce: " + this.pierce,numCols*rectWidth+10, height*0.25);
     textSize(25);
     text("DamageDealt: " + this.damageDealt,numCols*rectWidth, height*0.9);
-    this.exitButton.exitAction();
+    this.exitButton.exitUpgradesAction();
   }
 
   showRange(){
@@ -375,6 +412,25 @@ class Tower{
     this.bulletTravel();
   }
 
+}
+
+class Overlay{
+  constructor(x,y,c){
+    this.col = x;
+    this.row = y;
+    this.x = x*rectWidth+rectWidth/2;
+    this.y = y*rectHeight+rectHeight/2;
+    this.size = rectWidth;
+    this.c =  c;
+  }
+  createBase(){
+    fill(this.c);
+    circle(this.x,this.y,this.size);
+  }
+  action(){
+    this.createBase();
+  }
+  
 }
 
 intheway
@@ -465,7 +521,6 @@ class Enemy{
     this.goalY = checkPointY[this.counter];
     if(this.goalX > this.position.x){
       this.travelSpeed.set(this.speed,0);
-      this.direction = 2;
     }
     else if(this.goalY > this.position.y){
       this.travelSpeed.set(0,this.speed );
@@ -511,7 +566,9 @@ class Enemy{
       i++;
       if(b.atCastle()){
         enemies.splice(i,1);
-        lives-=1;
+        if (lives>0){
+          lives-=1;
+        }
       }
       else if(b.dead()){
         enemies.splice(i,1);
@@ -585,7 +642,7 @@ class Button{
     }
   }
 
-  exitInitialize(){
+  exitUpgradesInitialize(){
     fill(this.r,0,0);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
     fill(0);
@@ -595,7 +652,7 @@ class Button{
     strokeWeight(1);
   }
 
-  exitHoverOver(){
+  exitUpgradesHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.r  = 200;
       exitUpgrades = true;
@@ -606,9 +663,30 @@ class Button{
     }
   }
 
-  exitAction(){
-    this.exitHoverOver();
-    this.exitInitialize();
+  exitInitialize(){
+    fill(this.grey);
+    rect(this.x,this.y,this.w,this.h);
+    fill(0);
+    textAlign(CENTER,CENTER);
+    textSize(this.h);
+    text(this.message, this.x+this.w/2,this.y+this.h/2);
+    textAlign(LEFT,BASELINE);
+  }
+
+  exitHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
+      this.grey = 100;
+      exitGame = true;
+    }
+    else{
+      this.grey = 200;
+      exitGame = false;
+    }
+  }
+
+  exitUpgradesAction(){
+    this.exitUpgradesHoverOver();
+    this.exitUpgradesInitialize();
   }
 
   startAction(){
@@ -619,5 +697,9 @@ class Button{
   settingAction(){
     this.settingsHoverOver();
     this.settingsInitialize();
+  }
+  exitAction(){
+    this.exitHoverOver();
+    this.exitInitialize();
   }
 }
