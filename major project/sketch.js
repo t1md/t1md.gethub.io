@@ -21,12 +21,12 @@ let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
-let bank = 200;
+let bank = 2000;
 let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
 let enemyCount = 0;
-let overlay;
+let overlay = 0;
 let start = false;
 let startGame;
 let setting;
@@ -34,6 +34,11 @@ let settingButton;
 let volume = 100;
 let gameOver = false;
 let exitGame;
+let tower;
+let towerChoice;
+
+
+
 
 function reset(){
   defence = [];
@@ -65,7 +70,7 @@ function setup() {
     grid.push(Array(numCols).fill(0));
   }
   drawPath(0,7);
-  settingButton = new Button(width*0.95,height*0.01,50,50);
+  // settingButton = new Button(width*0.95,height*0.01,50,50);
 }
 
 let intheway
@@ -80,7 +85,7 @@ function draw() {
   if(gameOver === true){
     endScreen();
   }
-  settingButton.settingAction();
+  // settingButton.settingAction();
 }
 
 function startScreen(){
@@ -90,9 +95,9 @@ function startScreen(){
 }
 
 function endScreen(){
-  textSize(width*0.1)
+  textSize(width*0.1);
   text("you Lose!",width*0.3,height*0.4);
-  let exitButton = new Button(width*0.3,height*0.5,width*0.4,height*0.1,"Exit")
+  let exitButton = new Button(width*0.3,height*0.5,width*0.4,height*0.1,"Exit");
   exitButton.exitAction();
 }
 
@@ -101,8 +106,12 @@ function runProgram(){
   strokeWeight(1);
   col = getCurrentX();
   row = getCurrentY();
+  overlayTower();
   background(150);
   base();
+  if (overlay !== 0){
+    overlay.createBase();
+  }
   for(let d of defence){
     d.createBase();
   }
@@ -113,7 +122,10 @@ function runProgram(){
     b.action();
   }
   waves();
-  if (initialize!== 0){
+  if (initialize === 0){
+    showTowers();
+  }
+  else{
     initialize.openUpgrades();
   }
   drawStats();
@@ -122,19 +134,43 @@ function runProgram(){
   }
 }
 
+function showTowers(){
+  fill(0)
+  textSize(80);
+  text("Towers",width*0.82,height*0.17);
+  let firstTowerButton = new Button(width*0.82,height*0.2,width*0.07,width*0.07,0);
+  firstTowerButton.towerAction();
+  let secondTowerButton = new Button(width*0.92,height*0.2,width*0.07,width*0.07,0);
+  secondTowerButton.towerAction();
+}
+
+function overlayTower(){
+  if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
+    if(grid[col][row] === 0){
+      overlay = new Overlay(col,row,255);
+    }
+    else{
+      overlay = 0;
+    }
+  }
+  else{
+    overlay = 0;
+  }
+}
+
 function waves(){
-  if(enemies.length <=0 && enemyCount === 0){
+  if(enemies.length <=0 && enemyCount === 0 && lives>0){
     waveCount+=1;
     enemyCount = waveCount*2;
   }
   if(floor(frameCount%50) === 0 && enemyCount>0){
-    enemies.push(new Enemy(0,7,2,10,"green"));
+    enemies.push(new Enemy(0,7,2,2,"green",1));
     enemyCount-=1;
     if(floor(frameCount%60) === 0 && enemyCount>10){
-      enemies.push(new Enemy(0,7,4,25,"blue"));
+      enemies.push(new Enemy(0,7,4,6,"blue",2));
       enemyCount-=5;
       if(floor(frameCount%80) === 0 && enemyCount>100){
-        enemies.push(new Enemy(0,7,10,50,"red"));
+        enemies.push(new Enemy(0,7,8,12,"red",3));
         enemyCount-=20;
       }
     }
@@ -200,6 +236,7 @@ function mousePressed(){
           defence.push(new Tower(col,row,255));
           grid[col][row] = 1;
           cost(200);
+          tower = false;
         }
       }
       else if(grid[col][row] === 1){
@@ -211,7 +248,9 @@ function mousePressed(){
           }
         }
       }
-    
+    }
+    if(towerChoice !== false){
+      tower = towerChoice;
     }
   }
   if(startGame === true){
@@ -277,7 +316,7 @@ class Tower{
     this.bulletSpeed = 5;
     this.c =  c;
     this.range = 50;
-    this.damage = 5;
+    this.damage = 1;
     this.pierce = 1;
     this.damageDealt = 0;
     this.exitButton;
@@ -316,6 +355,7 @@ class Tower{
     noFill();
     circle(this.x,this.y,this.range*10);
     fill(0);
+    textSize(35);
     this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50,50);
     text("FireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
     text("Damage: " + this.damage,numCols*rectWidth+10, height*0.175);
@@ -427,10 +467,6 @@ class Overlay{
     fill(this.c);
     circle(this.x,this.y,this.size);
   }
-  action(){
-    this.createBase();
-  }
-  
 }
 
 intheway
@@ -446,11 +482,20 @@ class Bullet{
     this.c = c;
     this.hasHit = [];
     this.damageDealt = 0;
+    this.size = 10;
   }
 
   createBase(){
-    fill(this.c);
-    circle(this.position.x,this.position.y,10);
+    noStroke();
+    let x = this.position.x;
+    let y = this.position.y;
+    for(let i = this.size;i>=0;i--){
+      fill(this.c,255/abs(i-10));
+      x-=this.bulletSpeed.x;
+      y-=this.bulletSpeed.y;
+      circle(x,y,i);
+    }
+    stroke(1);
   }
 
   findDamage(){
@@ -507,13 +552,14 @@ class Bullet{
 intheway
 
 class Enemy{
-  constructor(x,y,s,health, colour){
+  constructor(x,y,s,health, colour, str){
     this.position = createVector(x,y*rectHeight+rectHeight/2);
     this.travelSpeed = createVector(0,0);
     this.counter = 0;
     this.speed = s;
     this.health = health;
     this.colour = colour;
+    this.str = str;
   }
 
   findPath(){
@@ -572,7 +618,7 @@ class Enemy{
       }
       else if(b.dead()){
         enemies.splice(i,1);
-        gain(50);
+        gain(25*this.str);
       }
     }
   }
@@ -684,6 +730,29 @@ class Button{
     }
   }
 
+  towerBaseInitialize(){
+    fill(this.grey);
+    rect(this.x,this.y,this.w,this.h,10,10,10,10);
+  }
+
+  towerInitialize(){
+    if (this.message === 0){
+      fill(255);
+      circle(this.x+this.w/2,this.y+this.h/2,this.w*0.9);
+    }
+  }
+
+  towerHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
+      this.grey = 100;
+      towerChoice = this.message;
+    }
+    else{
+      this.grey = 200;
+      towerChoice = false;
+    }
+  }
+
   exitUpgradesAction(){
     this.exitUpgradesHoverOver();
     this.exitUpgradesInitialize();
@@ -701,5 +770,9 @@ class Button{
   exitAction(){
     this.exitHoverOver();
     this.exitInitialize();
+  }
+  towerAction(){
+    this.towerHoverOver();
+    this.towerInitialize();
   }
 }
