@@ -8,6 +8,7 @@
 let health;
 let dollarSign;
 let settings;
+let deleteBin;
 
 
 let numRows = 16;
@@ -21,7 +22,7 @@ let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
-let bank = 2000;
+let bank = 200;
 let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
@@ -34,11 +35,13 @@ let settingButton;
 let volume = 100;
 let gameOver = false;
 let exitGame;
-let tower;
+let tower = false;
 let towerChoice;
+let deleter = false;
+let left,right;
 
 
-
+// bullet delete, first = farthest not first spawn, more towers, change first and closest
 
 function reset(){
   defence = [];
@@ -60,12 +63,12 @@ function preload(){
   health = loadImage("pictures/health.png");
   dollarSign = loadImage("pictures/money.png");
   settings = loadImage("pictures/settings.png");
+  deleteBin = loadImage("pictures/delete.png");
 }
 
 
 function setup() {
   createCanvas(numCols*rectWidth+300, numRows*rectHeight);
-  overlay = createGraphics(numCols*rectWidth+300, numRows*rectHeight);
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
@@ -106,11 +109,17 @@ function runProgram(){
   strokeWeight(1);
   col = getCurrentX();
   row = getCurrentY();
-  overlayTower();
   background(150);
   base();
+  if (tower !== false){
+    overlayTower(tower);
+  }
   if (overlay !== 0){
     overlay.createBase();
+  }
+  if(tower !== false ){
+    let deleteButton = new Button(width*0.75,height*0.01,width*0.05,width*0.05);
+    deleteButton.deleteAction();
   }
   for(let d of defence){
     d.createBase();
@@ -140,11 +149,11 @@ function showTowers(){
   text("Towers",width*0.82,height*0.17);
   let firstTowerButton = new Button(width*0.82,height*0.2,width*0.07,width*0.07,0);
   firstTowerButton.towerAction();
-  let secondTowerButton = new Button(width*0.92,height*0.2,width*0.07,width*0.07,0);
-  secondTowerButton.towerAction();
+  // let secondTowerButton = new Button(width*0.92,height*0.2,width*0.07,width*0.07,1);
+  // secondTowerButton.towerAction();
 }
 
-function overlayTower(){
+function overlayTower(tower){
   if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
     if(grid[col][row] === 0){
       overlay = new Overlay(col,row,255);
@@ -229,14 +238,21 @@ function mousePressed(){
       initialize = 0;
       exitUpgrades = false;
     }
+    if(left === true){
+      
+    }
 
     else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
-      if(grid[col][row] === 0){
-        if(bank>=200){
+      if(grid[col][row] === 0 && tower!== false){
+        if(bank>=200 && deleter !== true){
           defence.push(new Tower(col,row,255));
           grid[col][row] = 1;
           cost(200);
           tower = false;
+        }
+        else if(deleter === true){
+          tower = false;
+          overlay = 0;
         }
       }
       else if(grid[col][row] === 1){
@@ -363,8 +379,10 @@ class Tower{
     text("Range: " + this.range,numCols*rectWidth+10, height*0.225);
     text("Pierce: " + this.pierce,numCols*rectWidth+10, height*0.25);
     textSize(25);
-    text("DamageDealt: " + this.damageDealt,numCols*rectWidth, height*0.9);
+    text("DamageDealt: " + this.damageDealt,numCols*rectWidth, height*0.93);
     this.exitButton.exitUpgradesAction();
+    let targeting = new Button(width*0.85,height*0.95,width*0.1,height*0.03,this.targeting);
+    targeting.targetingAction();
   }
 
   showRange(){
@@ -753,6 +771,65 @@ class Button{
     }
   }
 
+  deleteInitialize(){
+    fill(this.r,0,0);
+    rect(this.x,this.y,this.w,this.h,10,10,10,10);
+    fill(0);
+    image(deleteBin,this.x,this.y,this.w,this.h);
+  }
+
+  deleteHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
+      this.r  = 200;
+      deleter = true;
+    }
+    else{
+      this.r = 255;
+      deleter = false;
+    }
+  }
+
+  targetingInitialize(){
+    fill(200);
+    rect(this.x,this.y,this.w,this.h,10,10,10,10);
+    fill(0);
+    textAlign(CENTER,CENTER);
+    textSize(this.h);
+    text(this.message, this.x+this.w/2,this.y+this.h/2);
+    fill(this.Lgrey);
+    square(this.x-this.w*0.25,this.y,this.w*0.25,10,10,10,10);
+    fill(this.Rgrey);
+    square(this.x+this.w,this.y,this.w*0.25,10,10,10,10);
+    fill(0);
+    text(">", this.x+this.w*1.13,this.y+this.h*0.55);
+    text("<", this.x-this.w*0.13,this.y+this.h*0.55);
+    textAlign(LEFT,BASELINE);
+  }
+
+  targetingHoverOver(){
+    if(mouseX>this.x-this.w*0.25 && mouseY>this.y && mouseX<this.x && mouseY<this.y+this.h){
+      this.Lgrey = 100;
+      left = true;
+    }
+    else{
+      this.Lgrey = 200;
+      left = false;
+    }
+    if(mouseX>this.x+this.w && mouseY>this.y && mouseX<this.x+this.w+this.w*0.25 && mouseY<this.y+this.h){
+      this.Rgrey = 100;
+      right = true;
+    }
+    else{
+      this.Rgrey = 200;
+      right = false;
+    }
+  }
+
+  deleteAction(){
+    this.deleteHoverOver();
+    this.deleteInitialize();
+  }
+
   exitUpgradesAction(){
     this.exitUpgradesHoverOver();
     this.exitUpgradesInitialize();
@@ -773,6 +850,11 @@ class Button{
   }
   towerAction(){
     this.towerHoverOver();
+    this.towerBaseInitialize();
     this.towerInitialize();
+  }
+  targetingAction(){
+    this.targetingHoverOver();
+    this.targetingInitialize();
   }
 }
