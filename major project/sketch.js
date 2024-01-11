@@ -39,9 +39,10 @@ let tower = false;
 let towerChoice;
 let deleter = false;
 let left,right;
-
+let targets = ["first","close"];
 
 // bullet delete, first = farthest not first spawn, more towers, change first and closest
+// sell tower
 
 function reset(){
   defence = [];
@@ -49,10 +50,13 @@ function reset(){
   grid = [];
   checkPointX = [];
   checkPointY = [];
+  overlay = 0;
   lives = 10;
   bank = 200;
   waveCount = 0;
   enemyCount = 0;
+  initialize = 0;
+  exitUpgrades = false;
   for (let i = 0; i < numRows; i++) {
     grid.push(Array(numCols).fill(0));
   }
@@ -239,7 +243,10 @@ function mousePressed(){
       exitUpgrades = false;
     }
     if(left === true){
-      
+      initialize.targeting = targets[0];
+    }
+    if(right === true){
+      initialize.targeting = targets[1];
     }
 
     else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
@@ -464,7 +471,7 @@ class Tower{
     if(this.targeting === "first"){
       this.firstEnemyTarget();
     }
-    if(this.targeting === "near"){
+    if(this.targeting === "close"){
       this.nearestEnemyTarget();
     }
     this.bulletTravel();
