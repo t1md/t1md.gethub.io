@@ -38,11 +38,11 @@ let exitGame;
 let tower = false;
 let towerChoice;
 let deleter = false;
+let sell = false;
 let left,right;
 let targets = ["first","close"];
 
-// bullet delete, first = farthest not first spawn, more towers, change first and closest
-// sell tower
+// bullet delete, first = farthest not first spawn, more towers
 
 function reset(){
   defence = [];
@@ -239,6 +239,15 @@ function getCurrentY(){
 function mousePressed(){
   if (start === true && gameOver === false){
     if(exitUpgrades === true){
+      if (sell === true){
+        let dCol = initialize.getColPosition();
+        let dRow = initialize.getRowPosition();
+        grid[dCol][dRow] = 0;
+        let twr = defence.indexOf(initialize);
+        defence.splice(twr,1);
+        gain(200);
+        overlay = 0;
+      }
       initialize = 0;
       exitUpgrades = false;
     }
@@ -256,6 +265,7 @@ function mousePressed(){
           grid[col][row] = 1;
           cost(200);
           tower = false;
+          overlay = 0;
         }
         else if(deleter === true){
           tower = false;
@@ -344,6 +354,7 @@ class Tower{
     this.damageDealt = 0;
     this.exitButton;
     this.targeting = "first";
+    this.sell = false;
   }
 
   getColPosition(){
@@ -380,6 +391,7 @@ class Tower{
     fill(0);
     textSize(35);
     this.exitButton = new Button(numCols*rectWidth+230, height*0.12,50,50);
+    this.sellButton = new Button(numCols*rectWidth+230, height*0.9,50,50);
     text("FireRate: " + this.fireRate,numCols*rectWidth+10, height*0.15,);
     text("Damage: " + this.damage,numCols*rectWidth+10, height*0.175);
     text("BulletSpeed: " + this.bulletSpeed,numCols*rectWidth+10, height*0.2);
@@ -388,6 +400,7 @@ class Tower{
     textSize(25);
     text("DamageDealt: " + this.damageDealt,numCols*rectWidth, height*0.93);
     this.exitButton.exitUpgradesAction();
+    this.sellButton.sellAction();
     let targeting = new Button(width*0.85,height*0.95,width*0.1,height*0.03,this.targeting);
     targeting.targetingAction();
   }
@@ -432,13 +445,13 @@ class Tower{
   }
 
   findFirstEnemy(){
+    let minDist = -1;
     let firstEnemy;
-    let count = 1;
     for(let b of enemies){
-      if(count===1){
-        let predictedPos = this.predictEnemyPosition(b);
+      let predictedPos = this.predictEnemyPosition(b);
+      if(b.counter > minDist && this.distance<this.range*5.5){
+        minDist = b.counter;
         firstEnemy = {b,predictedPos};
-        count-=1;
       }
     }
     return firstEnemy;
@@ -447,9 +460,9 @@ class Tower{
   nearestEnemyTarget(){
     this.counter += 1;
     if (floor(this.counter % (60/this.fireRate))===0) {
+      this.distance = this.findEnemyDistance();
       let nearestEnemy = this.findNearestEnemy();
-      let distance = this.findEnemyDistance();
-      if (enemies.length!==0 && distance<this.range*5.5) {
+      if (enemies.length!==0 && this.distance<this.range*5.5) {
         this.createBullet(nearestEnemy.predictedPos.x, nearestEnemy.predictedPos.y);
       }
     }
@@ -458,23 +471,25 @@ class Tower{
   firstEnemyTarget(){
     this.counter += 1;
     if (floor(this.counter % (60/this.fireRate))===0) {
+      this.distance = this.findEnemyDistance();
       let firstEnemy = this.findFirstEnemy();
-      let distance = this.findEnemyDistance();
-      if (enemies.length!==0 && distance<this.range*5.5) {
+      if (enemies.length!==0 && this.distance<this.range*5.5) {
         this.createBullet(firstEnemy.predictedPos.x, firstEnemy.predictedPos.y);
-      }
+      } 
     }
   }
 
 
   action(){
-    if(this.targeting === "first"){
-      this.firstEnemyTarget();
+    if(enemies.length!==0){
+      if(this.targeting === "first"){
+        this.firstEnemyTarget();
+      }
+      if(this.targeting === "close"){
+        this.nearestEnemyTarget();
+      }
+      this.bulletTravel();
     }
-    if(this.targeting === "close"){
-      this.nearestEnemyTarget();
-    }
-    this.bulletTravel();
   }
 
 }
@@ -796,6 +811,18 @@ class Button{
     }
   }
 
+  sellHoverOver(){
+    if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
+      this.r  = 200;
+      sell = true;
+      exitUpgrades = true;
+    }
+    else{
+      this.r = 255;
+      sell = false;
+    }
+  }
+
   targetingInitialize(){
     fill(200);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
@@ -830,6 +857,11 @@ class Button{
       this.Rgrey = 200;
       right = false;
     }
+  }
+
+  sellAction(){
+    this.sellHoverOver();
+    this.deleteInitialize();
   }
 
   deleteAction(){
