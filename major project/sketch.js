@@ -22,7 +22,7 @@ let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
-let bank = 200;
+let bank = 175;
 let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
@@ -41,8 +41,9 @@ let deleter = false;
 let sell = false;
 let left,right;
 let targets = ["first","close"];
+let hover = false;
 
-// bullet delete, first = farthest not first spawn, more towers
+// bullet delete, more towers
 
 function reset(){
   defence = [];
@@ -52,7 +53,7 @@ function reset(){
   checkPointY = [];
   overlay = 0;
   lives = 10;
-  bank = 200;
+  bank = 175;
   waveCount = 0;
   enemyCount = 0;
   initialize = 0;
@@ -109,6 +110,7 @@ function endScreen(){
 }
 
 function runProgram(){
+  towerChoice=false;
   rectMode(CORNER);
   strokeWeight(1);
   col = getCurrentX();
@@ -148,19 +150,19 @@ function runProgram(){
 }
 
 function showTowers(){
-  fill(0)
+  fill(0);
   textSize(80);
   text("Towers",width*0.82,height*0.17);
   let firstTowerButton = new Button(width*0.82,height*0.2,width*0.07,width*0.07,0);
   firstTowerButton.towerAction();
-  // let secondTowerButton = new Button(width*0.92,height*0.2,width*0.07,width*0.07,1);
-  // secondTowerButton.towerAction();
+  let secondTowerButton = new Button(width*0.92,height*0.2,width*0.07,width*0.07,1);
+  secondTowerButton.towerAction();
 }
 
-function overlayTower(tower){
+function overlayTower(){
   if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
     if(grid[col][row] === 0){
-      overlay = new Overlay(col,row,255);
+      overlay = new Overlay(col,row,tower);
     }
     else{
       overlay = 0;
@@ -175,6 +177,7 @@ function waves(){
   if(enemies.length <=0 && enemyCount === 0 && lives>0){
     waveCount+=1;
     enemyCount = waveCount*2;
+    gain(25);
   }
   if(floor(frameCount%50) === 0 && enemyCount>0){
     enemies.push(new Enemy(0,7,2,2,"green",1));
@@ -183,7 +186,7 @@ function waves(){
       enemies.push(new Enemy(0,7,4,6,"blue",2));
       enemyCount-=5;
       if(floor(frameCount%80) === 0 && enemyCount>100){
-        enemies.push(new Enemy(0,7,8,12,"red",3));
+        enemies.push(new Enemy(0,7,8,18,"red",3));
         enemyCount-=20;
       }
     }
@@ -245,7 +248,7 @@ function mousePressed(){
         grid[dCol][dRow] = 0;
         let twr = defence.indexOf(initialize);
         defence.splice(twr,1);
-        gain(200);
+        gain(150);
         overlay = 0;
       }
       initialize = 0;
@@ -260,8 +263,8 @@ function mousePressed(){
 
     else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
       if(grid[col][row] === 0 && tower!== false){
-        if(bank>=200 && deleter !== true){
-          defence.push(new Tower(col,row,255));
+        if(bank>=tower+1*200 && deleter !== true){
+          defence.push(new BaseTower(col,row,tower));
           grid[col][row] = 1;
           cost(200);
           tower = false;
@@ -336,26 +339,46 @@ function drawPath(x,y){
 intheway
 
 
-class Tower{
-  constructor(x,y,c){
+class BaseTower{
+  constructor(x,y,t){
     this.col = x;
     this.row = y;
     this.x = x*rectWidth+rectWidth/2;
     this.y = y*rectHeight+rectHeight/2;
     this.size = rectWidth;
-    this.fireRate = 1;
     this.counter = 0;
     this.bullets = [];
-    this.bulletSpeed = 5;
-    this.c =  c;
-    this.range = 50;
-    this.damage = 1;
-    this.pierce = 1;
     this.damageDealt = 0;
     this.exitButton;
     this.targeting = "first";
     this.sell = false;
+    this.index = 0;
+    if (t === 0){
+      this.shooter();
+    }
+    if(t === 1){
+      this.sprayer();
+    }
   }
+
+  shooter(){
+    this.c =  255;
+    this.fireRate = 1;
+    this.bulletSpeed = 5;
+    this.range = 50;
+    this.damage = 1;
+    this.pierce = 1;
+  }
+
+  sprayer(){
+    this.c = color(200,0,0);
+    this.fireRate = 5;
+    this.bulletSpeed = 4;
+    this.range = 30;
+    this.damage = 0.5;
+    this.pierce = 1;
+  }
+
 
   getColPosition(){
     return this.col;
@@ -377,7 +400,7 @@ class Tower{
     for(let b of this.bullets){
       b.fire();
       if(b.offscreen() || b.hit()){
-        this.bullets.splice(b,1);
+        this.bullets.splice(this.bullets.indexOf(b),1);
       }
       if(b.hit()){
         this.damageDealt += b.findDamage();
@@ -495,13 +518,18 @@ class Tower{
 }
 
 class Overlay{
-  constructor(x,y,c){
+  constructor(x,y,t){
     this.col = x;
     this.row = y;
     this.x = x*rectWidth+rectWidth/2;
     this.y = y*rectHeight+rectHeight/2;
     this.size = rectWidth;
-    this.c =  c;
+    if (t === 0){
+      this.c =  255;
+    }
+    if(t===1){
+      this.c = color(200,0,0);
+    }
   }
   createBase(){
     fill(this.c);
@@ -647,17 +675,15 @@ class Enemy{
   }
 
   remover(){
-    let i = -1;
     for(let b of enemies){
-      i++;
       if(b.atCastle()){
-        enemies.splice(i,1);
+        enemies.splice(enemies.indexOf(b),1);
         if (lives>0){
           lives-=1;
         }
       }
       else if(b.dead()){
-        enemies.splice(i,1);
+        enemies.splice(enemies.indexOf(b),1);
         gain(25*this.str);
       }
     }
@@ -778,8 +804,11 @@ class Button{
   towerInitialize(){
     if (this.message === 0){
       fill(255);
-      circle(this.x+this.w/2,this.y+this.h/2,this.w*0.9);
     }
+    if(this.message === 1){
+      fill(color(200,0,0));
+    }
+    circle(this.x+this.w/2,this.y+this.h/2,this.w*0.9);
   }
 
   towerHoverOver(){
@@ -789,7 +818,6 @@ class Button{
     }
     else{
       this.grey = 200;
-      towerChoice = false;
     }
   }
 
