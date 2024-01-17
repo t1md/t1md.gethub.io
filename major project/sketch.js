@@ -22,7 +22,7 @@ let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
-let bank = 175;
+let bank = 2000;
 let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
@@ -117,6 +117,7 @@ function runProgram(){
   row = getCurrentY();
   background(150);
   base();
+  waves();
   if (tower !== false){
     overlayTower(tower);
   }
@@ -136,7 +137,6 @@ function runProgram(){
   for(let b of enemies){
     b.action();
   }
-  waves();
   if (initialize === 0){
     showTowers();
   }
@@ -157,6 +157,10 @@ function showTowers(){
   firstTowerButton.towerAction();
   let secondTowerButton = new Button(width*0.92,height*0.2,width*0.07,width*0.07,1);
   secondTowerButton.towerAction();
+  let thirdTowerButton = new Button(width*0.82,height*0.33,width*0.07,width*0.07,2);
+  thirdTowerButton.towerAction();
+  let fourthTowerButton = new Button(width*0.92,height*0.33,width*0.07,width*0.07,3);
+  fourthTowerButton.towerAction();
 }
 
 function overlayTower(){
@@ -203,8 +207,12 @@ function drawStats(){
   text("Wave: "+ waveCount, 10, height*0.03);
 }
 
-function cost(amount){
-  bank-=amount;
+function costCalc(t){
+  return 200*(t+1);
+}
+
+function cost(t){
+  bank-=200*(t+1);
 }
 function gain(amount){
   bank+=amount;
@@ -263,10 +271,10 @@ function mousePressed(){
 
     else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
       if(grid[col][row] === 0 && tower!== false){
-        if(bank>=tower+1*200 && deleter !== true){
+        if(bank>=costCalc(tower) && deleter !== true){
           defence.push(new BaseTower(col,row,tower));
           grid[col][row] = 1;
-          cost(200);
+          cost(tower);
           tower = false;
           overlay = 0;
         }
@@ -359,6 +367,12 @@ class BaseTower{
     if(t === 1){
       this.sprayer();
     }
+    if(t === 2){
+      this.sniper();
+    }
+    if(t===3){
+      this.piercer();
+    }
   }
 
   shooter(){
@@ -377,6 +391,24 @@ class BaseTower{
     this.range = 30;
     this.damage = 0.5;
     this.pierce = 1;
+  }
+
+  sniper(){
+    this.c = color(0,100,255);
+    this.fireRate = 0.2;
+    this.bulletSpeed = 10;
+    this.range = 100;
+    this.damage = 5;
+    this.pierce = 1;
+  }
+
+  piercer(){
+    this.c = color(255,20,147);
+    this.fireRate = 0.3;
+    this.bulletSpeed = 6;
+    this.range = 50;
+    this.damage = 2;
+    this.pierce = 4;
   }
 
 
@@ -511,8 +543,8 @@ class BaseTower{
       if(this.targeting === "close"){
         this.nearestEnemyTarget();
       }
-      this.bulletTravel();
     }
+    this.bulletTravel();
   }
 
 }
@@ -530,6 +562,12 @@ class Overlay{
     if(t===1){
       this.c = color(200,0,0);
     }
+    if(t===2){
+      this.c = color(0,100,255);
+    }
+    if(t===3){
+      this.c = color(255,20,147);
+    }
   }
   createBase(){
     fill(this.c);
@@ -545,6 +583,7 @@ class Bullet{
     this.target = createVector(targetX, targetY);
     this.direction = this.target.copy().sub(this.position).normalize();
     this.bulletSpeed = this.direction.copy().mult(speed);
+    this.speed = speed;
     this.damage = damage;
     this.pierce = pierce;
     this.c = c;
@@ -557,7 +596,7 @@ class Bullet{
     noStroke();
     let x = this.position.x;
     let y = this.position.y;
-    for(let i = this.size;i>=0;i--){
+    for(let i = this.size;i>=0;i-=1*this.speed/5){
       fill(this.c,255/abs(i-10));
       x-=this.bulletSpeed.x;
       y-=this.bulletSpeed.y;
@@ -675,15 +714,19 @@ class Enemy{
   }
 
   remover(){
+    let i = 0;
     for(let b of enemies){
+      b =  enemies[enemies.indexOf(b)-i];
       if(b.atCastle()){
         enemies.splice(enemies.indexOf(b),1);
+        i--;
         if (lives>0){
           lives-=1;
         }
       }
       else if(b.dead()){
         enemies.splice(enemies.indexOf(b),1);
+        i--;
         gain(25*this.str);
       }
     }
@@ -706,6 +749,8 @@ class Enemy{
     this.remover();
   }
 }
+
+intheway
 
 class Button{
   constructor(x,y,w,h,message){
@@ -802,11 +847,27 @@ class Button{
   }
 
   towerInitialize(){
+    textSize(25);
+    fill(0);
     if (this.message === 0){
+      text("Basic",this.x+25,this.y-10);
+      text("200$",this.x+this.w/4,this.y+this.h+20);
       fill(255);
     }
     if(this.message === 1){
+      text("Sprayer",this.x+15,this.y-10);
+      text("400$",this.x+this.w/4,this.y+this.h+20);
       fill(color(200,0,0));
+    }
+    if(this.message === 2){
+      text("sniper",this.x+15,this.y-10);
+      text("600$",this.x+this.w/4,this.y+this.h+20);
+      fill(color(0,100,255));
+    }
+    if(this.message === 3){
+      text("piercer",this.x+15,this.y-10);
+      text("800$",this.x+this.w/4,this.y+this.h+20);
+      fill(color(255,20,147));
     }
     circle(this.x+this.w/2,this.y+this.h/2,this.w*0.9);
   }
