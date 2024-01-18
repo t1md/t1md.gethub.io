@@ -43,8 +43,6 @@ let left,right;
 let targets = ["first","close"];
 let hover = false;
 
-// bullet delete, more towers
-
 function reset(){
   defence = [];
   enemies = [];
@@ -177,24 +175,47 @@ function overlayTower(){
   }
 }
 
-function waves(){
-  if(enemies.length <=0 && enemyCount === 0 && lives>0){
-    waveCount+=1;
-    enemyCount = waveCount*2;
+function waves() {
+  if (enemies.length <= 0 && enemyCount === 0 && lives > 0) {
+    waveCount += 1;
+    enemyCount = waveCount * 2;
     gain(25);
   }
-  if(floor(frameCount%50) === 0 && enemyCount>0){
-    enemies.push(new Enemy(0,7,2,2,"green",1));
-    enemyCount-=1;
-    if(floor(frameCount%60) === 0 && enemyCount>10){
-      enemies.push(new Enemy(0,7,4,6,"blue",2));
-      enemyCount-=5;
-      if(floor(frameCount%80) === 0 && enemyCount>100){
-        enemies.push(new Enemy(0,7,8,18,"red",3));
-        enemyCount-=20;
+
+  if (frameCount % 50 === 0 && enemyCount > 0) {
+    enemies.push(new Enemy(0, 7, 2, 2, "green", 1));
+    enemyCount -= 1;
+
+    if (frameCount % 60 === 0 && enemyCount > 10) {
+      placeStrongerEnemies();
+    }
+  }
+}
+
+function placeRegularEnemies() {
+  if (floor(frameCount % 50) === 0 && enemyCount > 0) {
+    enemies.push(new Enemy(0, 7, 2, 2, "green", 1));
+    enemyCount -= 1;
+    if (floor(frameCount % 60) === 0 && enemyCount > 10) {
+      enemies.push(new Enemy(0, 7, 4, 6, "blue", 2));
+      enemyCount -= 5;
+      if (floor(frameCount % 80) === 0 && enemyCount > 100) {
+        enemies.push(new Enemy(0, 7, 8, 18, "red", 3));
+        enemyCount -= 20;
       }
     }
   }
+}
+
+function placeStrongerEnemies() {
+  let randType = floor(random(3));
+  let randSpeed = floor(random(4, 7));
+  let randHealth = floor(random(8, 15));
+  let randColor = color(random(255), random(255), random(255));
+  let randStrength = floor(random(3, 5));
+
+  enemies.push(new Enemy(0, 7, randSpeed, randHealth, randColor, randStrength));
+  enemyCount -= 5;
 }
 
 function drawStats(){
@@ -404,7 +425,7 @@ class BaseTower{
 
   piercer(){
     this.c = color(255,20,147);
-    this.fireRate = 0.3;
+    this.fireRate = 0.4;
     this.bulletSpeed = 6;
     this.range = 50;
     this.damage = 2;
@@ -669,25 +690,55 @@ class Enemy{
     this.str = str;
   }
 
-  findPath(){
+  findPath() {
     this.goalX = checkPointX[this.counter];
     this.goalY = checkPointY[this.counter];
-    if(this.goalX > this.position.x){
-      this.travelSpeed.set(this.speed,0);
-    }
-    else if(this.goalY > this.position.y){
-      this.travelSpeed.set(0,this.speed );
-    }
-    else if(this.goalY < this.position.y){
-      this.travelSpeed.set(0,-this.speed );
-    }
-    else{
-      this.travelSpeed.set(0,0);
-      this.counter +=1;
-      if(this.counter >= checkPointX.length){
-        this.travelSpeed.set(this.speed,0);
+  
+    // Calculate the desired movement direction
+    let desired = createVector(this.goalX - this.position.x, this.goalY - this.position.y).normalize();
+  
+    // Adjust movement based on collisions with walls
+    let collisionAdjustment = this.avoidWalls(desired);
+  
+    // Apply the adjusted movement to the travel speed
+    this.travelSpeed.set(collisionAdjustment.x * this.speed, collisionAdjustment.y * this.speed);
+  
+    // Move to the next checkpoint if close enough
+    if (dist(this.position.x, this.position.y, this.goalX, this.goalY) < this.speed) {
+      this.counter++;
+      if (this.counter >= checkPointX.length) {
+        this.travelSpeed.set(this.speed, 0);
+        this.counter = 0;
       }
     }
+  }
+  
+  avoidWalls(desired) {
+    // Check for collisions with walls in the desired direction
+    let ahead = createVector(this.position.x + desired.x * this.speed, this.position.y + desired.y * this.speed);
+  
+    // If there's a wall ahead, adjust the desired direction
+    if (this.isWallCollision(ahead)) {
+      let right = createVector(desired.y, -desired.x);
+      let left = createVector(-desired.y, desired.x);
+  
+      // Choose the direction with less obstruction
+      if (!this.isWallCollision(createVector(this.position.x + right.x * this.speed, this.position.y + right.y * this.speed))) {
+        return right;
+      } else if (!this.isWallCollision(createVector(this.position.x + left.x * this.speed, this.position.y + left.y * this.speed))) {
+        return left;
+      }
+    }
+  
+    // If no collision, proceed in the desired direction
+    return desired;
+  }
+  
+  isWallCollision(position) {
+    // Check if the position collides with a wall
+    let col = floor(position.x / rectWidth);
+    let row = floor(position.y / rectHeight);
+    return grid[col][row] === 1;
   }
   
   takeDamage(damage){
@@ -714,19 +765,17 @@ class Enemy{
   }
 
   remover(){
-    let i = 0;
-    for(let b of enemies){
-      b =  enemies[enemies.indexOf(b)-i];
-      if(b.atCastle()){
-        enemies.splice(enemies.indexOf(b),1);
-        i--;
+    for(let b = 0;b<enemies.length;b++){
+      if(enemies[b].atCastle()){
+        enemies.splice(b,1);
+        b--;
         if (lives>0){
           lives-=1;
         }
       }
-      else if(b.dead()){
-        enemies.splice(enemies.indexOf(b),1);
-        i--;
+      else if(enemies[b].dead()){
+        enemies.splice(b,1);
+        b--;
         gain(25*this.str);
       }
     }
