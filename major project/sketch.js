@@ -2,7 +2,9 @@
 // place towers and try to stop the enemies from reaching the end
 
 // still a work in progress.
-
+//better accuracy on the basic monkey
+//images instead of circles
+//sound effects
 
 let health;
 let dollarSign;
@@ -21,7 +23,7 @@ let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
-let bank = 175;
+let bank = 2000;
 let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
@@ -115,16 +117,7 @@ function runProgram(){
   background(150);
   base();
   waves();
-  if (tower !== false){
-    overlayTower(tower);
-  }
-  if (overlay !== 0){
-    overlay.createBase();
-  }
-  if(tower !== false ){
-    let deleteButton = new Button(width*0.75,height*0.01,width*0.05,width*0.05);
-    deleteButton.deleteAction();
-  }
+
   for(let d of defence){
     d.createBase();
   }
@@ -139,6 +132,16 @@ function runProgram(){
   }
   else{
     initialize.openUpgrades();
+  }
+  if (tower !== false){
+    overlayTower(tower);
+  }
+  if (overlay !== 0){
+    overlay.createBase();
+  }
+  if(tower !== false ){
+    let deleteButton = new Button(width*0.75,height*0.01,width*0.05,width*0.05);
+    deleteButton.deleteAction();
   }
   drawStats();
   if(lives <=0){
@@ -283,7 +286,7 @@ function mousePressed(){
           overlay = 0;
         }
       }
-      else if(grid[col][row] === 1){
+      else if(grid[col][row] === 1 && deleter === false){
         for(let d of defence){
           let dCol = d.getColPosition();
           let dRow = d.getRowPosition();
