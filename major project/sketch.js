@@ -1,13 +1,14 @@
+// timothy,Dobson
 // tower defence 
 // place towers and try to stop the enemies from reaching the end
 
-
+// names for pictures
 let health;
 let dollarSign;
 let settings;
 let deleteBin;
 
-
+// all global variables
 let numRows = 16;
 let numCols = 16;
 let rectWidth = 80;
@@ -27,7 +28,7 @@ let enemyCount = 0;
 let overlay = 0;
 let start = false;
 let startGame;
-let setting;
+let setting; 
 let settingButton;
 let volume = 100;
 let gameOver = false;
@@ -41,6 +42,7 @@ let targets = ["first","close"];
 let hover = false;
 let count = 0
 
+// resets variables that get perminantly changed during game and recreates grid and path
 function reset(){
   defence = [];
   enemies = [];
@@ -60,6 +62,7 @@ function reset(){
   drawPath(0,7);
 }
 
+// loads pictures
 function preload(){
   health = loadImage("pictures/health.png");
   dollarSign = loadImage("pictures/money.png");
@@ -67,7 +70,7 @@ function preload(){
   deleteBin = loadImage("pictures/delete.png");
 }
 
-
+// creates grid and draws initial path
 function setup() {
   createCanvas(numCols*rectWidth+300, numRows*rectHeight);
   for (let i = 0; i < numRows; i++) {
@@ -77,8 +80,7 @@ function setup() {
   // settingButton = new Button(width*0.95,height*0.01,50,50);
 }
 
-let intheway
-
+// draws what is needed depending on what is happening
 function draw() {
   if(start === false){
     startScreen();
@@ -92,12 +94,14 @@ function draw() {
   // settingButton.settingAction();
 }
 
+// initial start screen with a button to start the game
 function startScreen(){
   background(0,255,0);
   let startButton = new Button(width*0.3,height*0.5,width*0.4,height*0.1,"Start");
   startButton.startAction();
 }
 
+// tells you when you lost and lets you return to start screen to restart game
 function endScreen(){
   textSize(width*0.1);
   text("you Lose!",width*0.3,height*0.4);
@@ -105,6 +109,8 @@ function endScreen(){
   exitButton.exitAction();
 }
 
+
+// runs the main program
 function runProgram(){
   towerChoice=false;
   rectMode(CORNER);
@@ -114,38 +120,46 @@ function runProgram(){
   background(150);
   base();
   waves();
-
+  // draws the towers
   for(let d of defence){
     d.createBase();
   }
+  // runs the towers
   for(let d of defence){
     d.action();
   }
+  // runs enemies
   for(let b of enemies){
     b.action();
   }
+  // shows tower choices
   if (initialize === 0){
     showTowers();
   }
+  // shows stats for chosen tower
   else{
     initialize.openUpgrades();
   }
+  // creates a overlay of where the tower will be placed
   if (tower !== false){
     overlayTower(tower);
   }
+  // draws chosen overlay
   if (overlay !== 0){
     overlay.createBase();
   }
+  // draws the exit plcing button
   if(tower !== false ){
     let deleteButton = new Button(width*0.75,height*0.01,width*0.05,width*0.05);
     deleteButton.deleteAction();
   }
   drawStats();
+  // if lives hit 0 game over
   if(lives <=0){
     gameOver = true;
   }
 }
-
+// shows tower choices
 function showTowers(){
   fill(0);
   textSize(80);
@@ -160,6 +174,7 @@ function showTowers(){
   fourthTowerButton.towerAction();
 }
 
+// creates an overlay for where your tower will be placed
 function overlayTower(){
   if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
     if(grid[col][row] === 0){
@@ -174,6 +189,7 @@ function overlayTower(){
   }
 }
 
+// creates each wave progressivly making the waves harder
 function waves() {
   count++;
   if (enemies.length <= 0 && enemyCount <= 0 && lives > 0) {
@@ -197,6 +213,8 @@ function waves() {
     }
   }
 }
+
+// chooses between two different strong enemies when activated
 function placeStrongerEnemies() {
   let randType = floor(random(2,4));
 
@@ -204,6 +222,7 @@ function placeStrongerEnemies() {
   enemyCount -= 5;
 }
 
+// draws player stats and wave count
 function drawStats(){
   textSize(35);
   fill(0);
@@ -214,17 +233,22 @@ function drawStats(){
   text("Wave: "+ waveCount, 10, height*0.03);
 }
 
+// gives the price of towers
 function costCalc(t){
   return 200*(t+1);
 }
 
+// removes money from how much you have
 function cost(t){
   bank-=200*(t+1);
 }
+
+// adds money to how much you have
 function gain(amount){
   bank+=amount;
 }
 
+// creates the colours for the grid
 function base(){
   noStroke();
   for(let y = 0;y<numRows;y++){
@@ -244,19 +268,25 @@ function base(){
   stroke(1);
 }
 
+// gets which square the mouse is on the x axis
 function getCurrentX(){
   let constrainMouseX = constrain(mouseX, 0, numCols*rectWidth-1);
   return floor(constrainMouseX/rectWidth); 
 }
 
+// gets which square the mouse is on the y axis
 function getCurrentY(){
   let constrainMouseY = constrain(mouseY, 0, height-1);
   return floor(constrainMouseY/rectHeight);
 }
 
+// checks if mouse was pressed 
 function mousePressed(){
+  // only runs if the game is ongoing
   if (start === true && gameOver === false){
+    // if the x or garbage bin in upgrades is pressed activates it exits the upgrades window
     if(exitUpgrades === true){
+      // garbage: this sells the tower selected
       if (sell === true){
         let dCol = initialize.getColPosition();
         let dRow = initialize.getRowPosition();
@@ -269,6 +299,7 @@ function mousePressed(){
       initialize = 0;
       exitUpgrades = false;
     }
+    // chooses the targeting of the tower when arrows are pressed
     if(left === true){
       initialize.targeting = targets[0];
     }
@@ -276,8 +307,11 @@ function mousePressed(){
       initialize.targeting = targets[1];
     }
 
+    // this limits the position of mouse for placement to from inside the game
     else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
+      // this checks if there is anything there
       if(grid[col][row] === 0 && tower!== false && deleter !== true){
+        // checks if you have enough then if you do places tower
         if(bank>=costCalc(tower) ){
           defence.push(new BaseTower(col,row,tower));
           grid[col][row] = 1;
@@ -286,10 +320,12 @@ function mousePressed(){
           overlay = 0;
         }
       }
+      // stops placement of tower if x is pressed
       else if(deleter === true){
         tower = false;
         overlay = 0;
       }
+      // chooses the tower for the upgrader when a tower is pressed
       else if(grid[col][row] === 1 && deleter !== true){
         for(let d of defence){
           let dCol = d.getColPosition();
@@ -300,14 +336,17 @@ function mousePressed(){
         }
       }
     }
+    // tells game which tower you chose 
     if(towerChoice !== false ){
       tower = towerChoice;
     }
   }
+  // starts game when start game button is pressed
   if(startGame === true){
     start = true;
     startGame = false;
   }
+  // exits game when exit game button is pressed
   if(exitGame === true){
     start = false;
     exitGame = false;
@@ -316,6 +355,7 @@ function mousePressed(){
   }
 }
 
+// draws a path going up down or right randomly wont backtrack or go past area limits then creates a array that lists the x,y of where the path is for enemies
 function drawPath(x,y){
   let direction = floor(random(4));
   while(direction >4 || direction<0 ){
@@ -336,40 +376,10 @@ function drawPath(x,y){
         drawPath(x,y+1);
       }
     }
-    else if(direction === 3 && y!==0){
-      if(grid[x][y-1]===2){
-        drawPath(x+1,y);
-      }
-      else{
-        drawPath(x,y-1);
-      }
-    }
-    else{
-      drawPath(x+1,y);
-    }
-  }
-  checkPointX.push(x*rectWidth+rectWidth/2);
-  checkPointY.push(y*rectHeight+rectHeight/2);
-}
-
-
-intheway
-
-
-class BaseTower{
-  constructor(x,y,t){
-    this.col = x;
-    this.row = y;
-    this.x = x*rectWidth+rectWidth/2;
-    this.y = y*rectHeight+rectHeight/2;
-    this.size = rectWidth;
-    this.counter = 0;
-    this.bullets = [];
-    this.damageDealt = 0;
-    this.exitButton;
-    this.targeting = "first";
+    else i
     this.sell = false;
     this.t = t
+    // pick which tower you place
     if (t === 0){
       this.shooter();
     }
@@ -383,7 +393,7 @@ class BaseTower{
       this.piercer();
     }
   }
-
+  // basic tower
   shooter(){
     this.c =  255;
     this.fireRate = 1;
@@ -392,7 +402,7 @@ class BaseTower{
     this.damage = 1.5;
     this.pierce = 1;
   }
-
+  // fast shooting low damage
   sprayer(){
     this.c = color(200,0,0);
     this.fireRate = 5;
@@ -401,7 +411,7 @@ class BaseTower{
     this.damage = 0.5;
     this.pierce = 1;
   }
-
+  // long distance high damage
   sniper(){
     this.c = color(0,100,255);
     this.fireRate = 0.2;
@@ -410,33 +420,34 @@ class BaseTower{
     this.damage = 5;
     this.pierce = 1;
   }
-
+  // pierces through multiple enemies
   piercer(){
     this.c = color(255,20,147);
     this.fireRate = 0.4;
     this.bulletSpeed = 6;
     this.range = 50;
-    this.damage = 2;
+    this.damage = 3;
     this.pierce = 4;
   }
 
-
+  // gets the position on the array
   getColPosition(){
     return this.col;
   }
+  // gets the position on the array
   getRowPosition(){
     return this.row;
   }
-
+  // draws base
   createBase(){
     fill(this.c);
     circle(this.x,this.y,this.size);
   }
-
+  // creates a bullet 
   createBullet(enemyX, enemyY) {
     this.bullets.push(new Bullet(this.x, this.y, enemyX, enemyY, this.bulletSpeed,this.c,this.damage,this.pierce));
   }
-
+  // moves the bullet and removes any that hit enemies or go offscreen
   bulletTravel(){
     for(let b of this.bullets){
       b.fire();
@@ -448,7 +459,7 @@ class BaseTower{
       }
     }
   }
-
+  // shows stats and creates the exit sell and targeting buttons
   openUpgrades(){
     noFill();
     circle(this.x,this.y,this.range*10);
@@ -468,12 +479,12 @@ class BaseTower{
     let targeting = new Button(width*0.85,height*0.95,width*0.1,height*0.03,this.targeting);
     targeting.targetingAction();
   }
-
+  // shows the range as a circle
   showRange(){
     noFill();
     circle(this.x,this.y,this.range*10);
   }
-
+// finds the distance between the tower and the closest enemy
   findEnemyDistance() {
     let minDist = Infinity;
     for (let b of enemies) {
@@ -484,7 +495,7 @@ class BaseTower{
     }
     return minDist;
   }
-
+  // predicts where the enemie will be when the bullet will hit it
   predictEnemyPosition(enemy) {
     let timeToHit = dist(this.x, this.y, enemy.enemyX(), enemy.enemyY()) / this.bulletSpeed;
     let futureX = enemy.enemyX() + enemy.travelSpeed.x * timeToHit;
@@ -493,7 +504,7 @@ class BaseTower{
     return createVector(futureX, futureY);
   
   }
-
+  // finds the closest enemy
   findNearestEnemy() {
     let minDist = Infinity;
     let nearestEnemy;
@@ -507,7 +518,7 @@ class BaseTower{
     }
     return nearestEnemy;
   }
-
+  // finds the farthest along the track enemy thats within the towers range
   findFirstEnemy() {
     let maxDist = -Infinity;
     let firstEnemy = 0;
@@ -521,6 +532,7 @@ class BaseTower{
     }
     return firstEnemy;
 }
+// shootes at the nearest enemy
   nearestEnemyTarget(){
     this.counter += 1;
     if (floor(this.counter % (60/this.fireRate))===0) {
@@ -531,7 +543,7 @@ class BaseTower{
       }
     }
   }
-
+// shoots at the farthets along the track enemy
   firstEnemyTarget(){
     this.counter += 1;
     if (floor(this.counter % (60/this.fireRate))===0) {
@@ -543,7 +555,7 @@ class BaseTower{
     }
   }
 
-
+// chooses which to uses and activates them and moves the bullet
   action(){
     if(enemies.length!==0){
       if(this.targeting === "first"){
@@ -557,7 +569,7 @@ class BaseTower{
   }
 
 }
-
+// draws an overlay of where the tower will be placed
 class Overlay{
   constructor(x,y,t){
     this.col = x;
@@ -584,8 +596,7 @@ class Overlay{
   }
 }
 
-intheway
-
+// bullet
 class Bullet{
   constructor(x, y, targetX, targetY, speed,c, damage, pierce) {
     this.position = createVector(x, y);
@@ -600,7 +611,7 @@ class Bullet{
     this.damageDealt = 0;
     this.size = 10;
   }
-
+  // draws bullet and gives it a tail
   createBase(){
     noStroke();
     let x = this.position.x;
@@ -613,11 +624,12 @@ class Bullet{
     }
     stroke(1);
   }
-
+  // returns the bullets total damage delt
   findDamage(){
     return this.damageDealt;
   }
 
+  // figures out if the bullet hit an enemy
   hitEnemy(){
     for (let b of enemies) {
       let d = dist(this.position.x, this.position.y, b.enemyX(), b.enemyY());
@@ -642,22 +654,23 @@ class Bullet{
 
   }
 
+// moves bullet
   movement(){
     this.position.add(this.bulletSpeed);
   }
-
+// runs previous functions
   fire(){
     this.createBase();
     this.movement();
     this.hitEnemy();
   }
-
+// checks if bullet left screen
   offscreen(){
     if(this.position.x > numCols*rectWidth || this.position.x < 0 || this.position.y > height || this.position.y < 0){
       return true;
     }
   }
-
+// tells if bullet has used all its pierce
   hit(){
     if(this.pierce<1){
       return true;
@@ -665,14 +678,14 @@ class Bullet{
   }
 }
 
-intheway
-
+// enemy class
 class Enemy{
   constructor(x,y,t){
     this.position = createVector(x,y*rectHeight+rectHeight/2);
     this.travelSpeed = createVector(0,0);
     this.counter = 0; 
     this.t = t
+    // chooses type
     if(t === 1){
       this.basic();
     }
@@ -686,32 +699,32 @@ class Enemy{
       this.evil();
     }
   }
-
+// moderate speed and weak
   basic(){
     this.speed =  2;
     this.health = 3;
     this.colour = "green";
   }
-
+// slow but lots of health
   tank(){
     this.speed = 1;
     this.health = 25;
     this.colour = "blue"
   }
-
+  // quick but less health
   speedy(){
     this.speed = 5;
-    this.health = 5;
+    this.health = 2;
     this.colour = "red"
   }
-
+// bunch of health with good speed
   evil(){
-    this.speed = 6;
-    this.health = 30;
+    this.speed = 4;
+    this.health = 20;
     this.colour = 0
   }
 
-
+// finds where to go using the array from create path
   findPath() {
     this.goalX = checkPointX[this.counter];
     this.goalY = checkPointY[this.counter];
@@ -728,30 +741,31 @@ class Enemy{
      }
    }
 
-
+// removes health in accordance to damage
   takeDamage(damage){
     this.health-=damage;
   }
-
+// tells if the enemies has fallen below 0 health
   dead(){
     if(this.health <= 0){
       return true;
     }
   }
-
+// tells if enemy is at the end
   atCastle(){
     if(this.position.x-16>=numCols*rectWidth){
       return true;
     }
   }
-
+// finds x position
   enemyX(){
     return this.position.x;
   }
+  // finds y position
   enemyY(){ 
     return this.position.y;
   }
-
+// deletes enemies if at end or dead and makes you lose health or gain money correspondently
   remover(){
     for(let b = 0;b<enemies.length;b++){
       if(enemies[b].atCastle()){
@@ -768,17 +782,17 @@ class Enemy{
       }
     }
   }
-
+// moves enemy
   movement(){
     this.position.add(this.travelSpeed);
   }
-
+// draws the enemy
   createEnemy(){
     fill(this.colour);
     circle(this.position.x,this.position.y,30);
     fill(255);
   }
-
+// runs the functions
   action(){
     this.createEnemy();
     this.findPath();
@@ -787,8 +801,7 @@ class Enemy{
   }
 }
 
-intheway
-
+// creates buttons all of the variables are to tell the mose pressed what action to take
 class Button{
   constructor(x,y,w,h,message){
     this.x = x;
@@ -801,7 +814,7 @@ class Button{
     this.gray = 0;
     this.message = message;
   }
-
+// craetes a grey rectangle with a message
   textInitialize(){
     fill(this.grey);
     rect(this.x,this.y,this.w,this.h);
@@ -812,6 +825,7 @@ class Button{
     textAlign(LEFT,BASELINE);
   }
 
+  // if the start is hoverd over tells computer and changes tone of grey
   startHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.grey = 100;
@@ -822,11 +836,11 @@ class Button{
       startGame = false;
     }
   }
-
+// not in use 
   settingsInitialize(){
     image(settings,this.x,this.y,this.w,this.h);
   }
-
+// not in use
   settingsHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       setting = true;
@@ -835,7 +849,7 @@ class Button{
       setting = false;
     }
   }
-
+// draws a red square with a black x inside
   exitUpgradesInitialize(){
     fill(this.r,0,0);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
@@ -845,7 +859,7 @@ class Button{
     line(this.x+this.w-5,this.y+5,this.x+5,this.y+this.h-5);
     strokeWeight(1);
   }
-
+// changes shade of red and tells computer its hoverd over
   exitUpgradesHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.r  = 200;
@@ -856,7 +870,7 @@ class Button{
       exitUpgrades = false;
     }
   }
-
+// creates a grey rectangle with writing inside
   exitInitialize(){
     fill(this.grey);
     rect(this.x,this.y,this.w,this.h);
@@ -866,7 +880,7 @@ class Button{
     text(this.message, this.x+this.w/2,this.y+this.h/2);
     textAlign(LEFT,BASELINE);
   }
-
+// tells computer its hoverd over and changes tone of grey
   exitHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.grey = 100;
@@ -877,12 +891,12 @@ class Button{
       exitGame = false;
     }
   }
-
+// creates a grey square
   towerBaseInitialize(){
     fill(this.grey);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
   }
-
+// shows which tower you would get if you chose this square
   towerInitialize(){
     textSize(25);
     fill(0);
@@ -908,7 +922,7 @@ class Button{
     }
     circle(this.x+this.w/2,this.y+this.h/2,this.w*0.9);
   }
-
+// if hoverd over changes the grey tone then tells computer your tower choice
   towerHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.grey = 100;
@@ -918,14 +932,14 @@ class Button{
       this.grey = 200;
     }
   }
-
+// draws a red square with a garbage bin ontop
   sellInitialize(){
     fill(this.r,0,0);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
     fill(0);
     image(deleteBin,this.x,this.y,this.w,this.h);
   }
-
+// changes the shade of red and tells computer you are hovered over
   deleteHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.r  = 200;
@@ -936,7 +950,7 @@ class Button{
       deleter = false;
     }
   }
-
+// tells computer if you are hovered over and changes shade of red
   sellHoverOver(){
     if(mouseX>this.x && mouseY>this.y && mouseX<this.x+this.w && mouseY<this.y+this.h){
       this.r  = 200;
@@ -948,7 +962,7 @@ class Button{
       sell = false;
     }
   }
-
+// creates a rectangle with the current targeting option and two quares on either side which change the targeting option
   targetingInitialize(){
     fill(200);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
@@ -965,7 +979,7 @@ class Button{
     text("<", this.x-this.w*0.13,this.y+this.h*0.55);
     textAlign(LEFT,BASELINE);
   }
-
+// check whick of the squares your hovering over and tells the computer the corresponding choice it also changes the shade of grey of the one your hovering over
   targetingHoverOver(){
     if(mouseX>this.x-this.w*0.25 && mouseY>this.y && mouseX<this.x && mouseY<this.y+this.h){
       this.Lgrey = 100;
@@ -984,7 +998,7 @@ class Button{
       right = false;
     }
   }
-
+// all of these just pair the initializes with the right hoverOver and puts it in a nice on line function
   sellAction(){
     this.sellHoverOver();
     this.sellInitialize();
