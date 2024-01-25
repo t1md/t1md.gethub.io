@@ -376,7 +376,35 @@ function drawPath(x,y){
         drawPath(x,y+1);
       }
     }
-    else i
+    else if(direction === 3 && y!==0){
+      if(grid[x][y-1]===2){
+        drawPath(x+1,y);
+      }
+      else{
+        drawPath(x,y-1);
+      }
+    }
+    else{
+      drawPath(x+1,y);
+    }
+  }
+  checkPointX.push(x*rectWidth+rectWidth/2);
+  checkPointY.push(y*rectHeight+rectHeight/2);
+}
+
+// tower class
+class BaseTower{
+  constructor(x,y,t){
+    this.col = x;
+    this.row = y;
+    this.x = x*rectWidth+rectWidth/2;
+    this.y = y*rectHeight+rectHeight/2;
+    this.size = rectWidth;
+    this.counter = 0;
+    this.bullets = [];
+    this.damageDealt = 0;
+    this.exitButton;
+    this.targeting = "first";
     this.sell = false;
     this.t = t
     // pick which tower you place
@@ -567,8 +595,8 @@ function drawPath(x,y){
     }
     this.bulletTravel();
   }
-
 }
+
 // draws an overlay of where the tower will be placed
 class Overlay{
   constructor(x,y,t){
