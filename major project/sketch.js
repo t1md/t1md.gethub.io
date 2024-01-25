@@ -1,10 +1,6 @@
 // tower defence 
 // place towers and try to stop the enemies from reaching the end
 
-// still a work in progress.
-//better accuracy on the basic monkey
-//images instead of circles
-//sound effects
 
 let health;
 let dollarSign;
@@ -23,7 +19,7 @@ let enemies = [];
 let checkPointX = [];
 let checkPointY = [];
 let lives = 10;
-let bank = 2000;
+let bank = 250;
 let initialize = 0;
 let exitUpgrades;
 let waveCount = 0;
@@ -43,6 +39,7 @@ let sell = false;
 let left,right;
 let targets = ["first","close"];
 let hover = false;
+let count = 0
 
 function reset(){
   defence = [];
@@ -52,7 +49,7 @@ function reset(){
   checkPointY = [];
   overlay = 0;
   lives = 10;
-  bank = 175;
+  bank = 250;
   waveCount = 0;
   enemyCount = 0;
   initialize = 0;
@@ -178,23 +175,30 @@ function overlayTower(){
 }
 
 function waves() {
-  if (enemies.length <= 0 && enemyCount === 0 && lives > 0) {
+  count++;
+  if (enemies.length <= 0 && enemyCount <= 0 && lives > 0) {
     waveCount += 1;
     enemyCount = waveCount * 2;
-    gain(25);
+    gain(50);
+    count = 0
   }
 
-  if (frameCount % 50 === 0 && enemyCount > 0) {
+  if (count % 50 === 0 && enemyCount > 0) {
     enemies.push(new Enemy(0,7,1));
     enemyCount -= 1;
 
-    if (frameCount % 60 === 0 && enemyCount > 10) {
+    if (count % 60 === 0 && enemyCount > 5) {
       placeStrongerEnemies();
+
+      if(count % 60 === 0 && enemyCount>15){
+        enemies.push(new Enemy(0,7,4));
+        enemyCount -= 15
+      }
     }
   }
 }
 function placeStrongerEnemies() {
-  let randType = 2;
+  let randType = floor(random(2,4));
 
   enemies.push(new Enemy(0, 7,randType));
   enemyCount -= 5;
@@ -258,8 +262,8 @@ function mousePressed(){
         let dRow = initialize.getRowPosition();
         grid[dCol][dRow] = 0;
         let twr = defence.indexOf(initialize);
+        gain((initialize.t+1)*150);
         defence.splice(twr,1);
-        gain(150);
         overlay = 0;
       }
       initialize = 0;
@@ -273,20 +277,20 @@ function mousePressed(){
     }
 
     else if(mouseX>0&&mouseX<numCols*rectWidth&&mouseY>0&&mouseY<height){
-      if(grid[col][row] === 0 && tower!== false){
-        if(bank>=costCalc(tower) && deleter !== true){
+      if(grid[col][row] === 0 && tower!== false && deleter !== true){
+        if(bank>=costCalc(tower) ){
           defence.push(new BaseTower(col,row,tower));
           grid[col][row] = 1;
           cost(tower);
           tower = false;
           overlay = 0;
         }
-        else if(deleter === true){
-          tower = false;
-          overlay = 0;
-        }
       }
-      else if(grid[col][row] === 1 && deleter === false){
+      else if(deleter === true){
+        tower = false;
+        overlay = 0;
+      }
+      else if(grid[col][row] === 1 && deleter !== true){
         for(let d of defence){
           let dCol = d.getColPosition();
           let dRow = d.getRowPosition();
@@ -296,7 +300,7 @@ function mousePressed(){
         }
       }
     }
-    if(towerChoice !== false){
+    if(towerChoice !== false ){
       tower = towerChoice;
     }
   }
@@ -344,6 +348,8 @@ function drawPath(x,y){
       drawPath(x+1,y);
     }
   }
+  checkPointX.push(x*rectWidth+rectWidth/2);
+  checkPointY.push(y*rectHeight+rectHeight/2);
 }
 
 
@@ -363,7 +369,7 @@ class BaseTower{
     this.exitButton;
     this.targeting = "first";
     this.sell = false;
-    this.index = 0;
+    this.t = t
     if (t === 0){
       this.shooter();
     }
@@ -502,19 +508,19 @@ class BaseTower{
     return nearestEnemy;
   }
 
-  findFirstEnemy(){
-    let minDist = -1;
-    let firstEnemy;
-    for(let b of enemies){
-      let predictedPos = this.predictEnemyPosition(b);
-      if(b.counter > minDist && this.distance<this.range*5.5){
-        minDist = b.counter;
-        firstEnemy = {b,predictedPos};
-      }
+  findFirstEnemy() {
+    let maxDist = -Infinity;
+    let firstEnemy = 0;
+    for (let b of enemies) {
+        let predictedPos = this.predictEnemyPosition(b);
+        let d = dist(this.x, this.y, predictedPos.x, predictedPos.y);
+        if (b.counter > maxDist && d < this.range * 5.5) {
+            maxDist = b.counter;
+            firstEnemy = { b, predictedPos };
+        }
     }
     return firstEnemy;
-  }
-
+}
   nearestEnemyTarget(){
     this.counter += 1;
     if (floor(this.counter % (60/this.fireRate))===0) {
@@ -531,7 +537,7 @@ class BaseTower{
     if (floor(this.counter % (60/this.fireRate))===0) {
       this.distance = this.findEnemyDistance();
       let firstEnemy = this.findFirstEnemy();
-      if (enemies.length!==0 && this.distance<this.range*5.5) {
+      if (enemies.length!==null && this.distance<this.range*5.5 && firstEnemy !== 0) {
         this.createBullet(firstEnemy.predictedPos.x, firstEnemy.predictedPos.y);
       } 
     }
@@ -673,6 +679,12 @@ class Enemy{
     if(t === 2){
       this.tank();
     }
+    if(t === 3){
+      this.speedy();
+    }
+    if(t === 4){
+      this.evil();
+    }
   }
 
   basic(){
@@ -687,76 +699,36 @@ class Enemy{
     this.colour = "blue"
   }
 
+  speedy(){
+    this.speed = 5;
+    this.health = 5;
+    this.colour = "red"
+  }
+
+  evil(){
+    this.speed = 6;
+    this.health = 30;
+    this.colour = 0
+  }
+
+
   findPath() {
     this.goalX = checkPointX[this.counter];
     this.goalY = checkPointY[this.counter];
-    if(this.goalX > this.position.x){
-      this.travelSpeed.set(this.speed,0);
-    }
-    else if(this.goalY > this.position.y){
-      this.travelSpeed.set(0,this.speed );
-    }
-    else if(this.goalY < this.position.y){
-      this.travelSpeed.set(0,-this.speed );
-    }
-  else{
-    this.travelSpeed.set(0,0);
-    this.counter +=1;
-    if(this.counter >= checkPointX.length){
-      this.travelSpeed.set(this.speed,0);
-    }
-  }
-}
+  
+     let direction = createVector(this.goalX - this.position.x, this.goalY - this.position.y).normalize();
 
-"work in progress this breaks the game currently"
-  
-  //   // Calculate the desired movement direction
-  //   let desired = createVector(this.goalX - this.position.x, this.goalY - this.position.y).normalize();
-  
-  //   // Adjust movement based on collisions with walls
-  //   let collisionAdjustment = this.avoidWalls(desired);
-  
-  //   // Apply the adjusted movement to the travel speed
-  //   this.travelSpeed.set(collisionAdjustment.x * this.speed, collisionAdjustment.y * this.speed);
-  
-  //   // Move to the next checkpoint if close enough
-  //   if (dist(this.position.x, this.position.y, this.goalX, this.goalY) < this.speed) {
-  //     this.counter++;
-  //     if (this.counter >= checkPointX.length) {
-  //       this.travelSpeed.set(this.speed, 0);
-  //       this.counter = 0;
-  //     }
-  //   }
-  // }
-  
-  // avoidWalls(desired) {
-  //   // Check for collisions with walls in the desired direction
-  //   let ahead = createVector(this.position.x + desired.x * this.speed, this.position.y + desired.y * this.speed);
-  
-  //   // If there's a wall ahead, adjust the desired direction
-  //   if (this.isWallCollision(ahead)) {
-  //     let right = createVector(desired.y, -desired.x);
-  //     let left = createVector(-desired.y, desired.x);
-  
-  //     // Choose the direction with less obstruction
-  //     if (!this.isWallCollision(createVector(this.position.x + right.x * this.speed, this.position.y + right.y * this.speed))) {
-  //       return right;
-  //     } else if (!this.isWallCollision(createVector(this.position.x + left.x * this.speed, this.position.y + left.y * this.speed))) {
-  //       return left;
-  //     }
-  //   }
-  
-  //   // If no collision, proceed in the desired direction
-  //   return desired;
-  // }
-  
-  // isWallCollision(position) {
-  //   // Check if the position collides with a wall
-  //   let col = floor(position.x / rectWidth);
-  //   let row = floor(position.y / rectHeight);
-  //   return grid[col][row] === 1;
-  // }
-  
+     this.travelSpeed.set(direction.x * this.speed, direction.y * this.speed);
+   
+     if (dist(this.position.x, this.position.y, this.goalX, this.goalY) < this.speed) {
+       this.counter++;
+       if (this.counter >= checkPointX.length) {
+         this.travelSpeed.set(this.speed,0)
+       }
+     }
+   }
+
+
   takeDamage(damage){
     this.health-=damage;
   }
@@ -947,8 +919,7 @@ class Button{
     }
   }
 
-  deleteInitialize(){
-
+  sellInitialize(){
     fill(this.r,0,0);
     rect(this.x,this.y,this.w,this.h,10,10,10,10);
     fill(0);
@@ -1016,7 +987,7 @@ class Button{
 
   sellAction(){
     this.sellHoverOver();
-    this.deleteInitialize();
+    this.sellInitialize();
   }
 
   deleteAction(){
